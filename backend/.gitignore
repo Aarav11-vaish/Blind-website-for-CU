@@ -1,0 +1,55 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*~
+
+# Build artifacts
+build/
+dist/
+target/
+*.log
+*.tmp
+*.bak
+*.obj
+*.exe
+*.dll
+*.so
+*.o
+*.pyc
+__pycache__/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment variables and sensitive data
+.env
+config.local.js
+*.key
+*.pem
+
+# Specific language examples (uncomment or add as needed)
+# Python
+# venv/
+# *.pyc
+
+# Node.js
+# npm-debug.log
+# yarn-debug.log
+
+# Java
+# *.class
+# *.jar
+# *.war
+
+# macOS specific
+# .AppleDouble
+# .LSOverride
