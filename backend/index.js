@@ -8,6 +8,7 @@ import { sendEmail } from './src/services/sendEmail.js';
 import generateOTP from './src/services/generateOTP.js';
 import { OTP } from './src/models/otpSchema.js';
 import { User } from './src/models/userschema.js';
+import { v4 as uuidv4 } from "uuid";
 // Load environment variables from .env file
 dotenv.config();
 const app = express();
@@ -48,42 +49,69 @@ app.post('/signup', async (req, res) => {
     await sendEmail(email, otp);
 
     res.json({ message: "OTP sent to email" });
-
 }
 )
 app.post('/verify-otp', async (req, res) => {
-    // picking email and otp from req body
-    try{
+  try {
     const { email, enteredOtp } = req.body;
-    if (!enteredOtp) {
-        return res.status(400).json({ message: "OTP is required" });
+
+    if (!email || !enteredOtp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
     }
 
     const otpEntry = await OTP.findOne({ email });
-    if (otpEntry.otp != enteredOtp) {
-        return res.status(400).json({ message: "OTP expired or invalid" });
-    }
-    // jwt token generation for user 
 
-    const token = jwt.sign({ email, user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    if (!otpEntry) {
+      return res.status(400).json({ message: "OTP expired or not found" });
+    }
+
+    if (otpEntry.otp !== enteredOtp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // Delete OTP after successful verification
     await OTP.deleteOne({ email });
+
     let user = await User.findOne({ email });
+
     if (!user) {
-        user = new User({ email, user_id: generateUserId(), isverified: true });
-        await user.save();
+      // Use UUID for new users
+      const newUserId = uuidv4();
+
+      user = await User.create({
+        email,
+        user_id: newUserId,
+        isverified: true
+      });
+    } else {
+      user.isverified = true;
+      await user.save();
     }
-    else {
-        user.isverified = true;
-        await user.save();
-    }
-    res.json({ message: "OTP verified successfully", user, token });
-    }
-    catch(error) {      
-        console.error('Error verifying OTP:', error);   
-        res.status(500).json({ message: "Internal server error" });
-    }
-})
+
+    // Generate JWT token AFTER user exists
+    const token = jwt.sign(
+      {
+        email: user.email,
+        user_id: user.user_id
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      message: "OTP verified successfully",
+      user,
+      token
+    });
+
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 })
+
