@@ -28,26 +28,32 @@ app.get('/', (req, res) => {
     res.send('API is running...');
 })
 
+// signup for user
 app.post('/sighnup', async (req, res) => {
 
     const { email } = req.body;
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
     }
+    //checker for valid mail
     if (!email.toLowerCase().endsWith('.cuchd.in')) {
         return res.status(400).json({ message: "Please use your college email" });
     }
+    //generate otp ()
     const otp = generateOTP();
-
+    //saving the otp for some time
     const newOtpEntry = new OTP({ email, otp });
     await newOtpEntry.save();
-
+    // send otp to email
     await sendEmail(email, otp);
+
     res.json({ message: "OTP sent to email" });
 
 }
 )
 app.post('/verify-otp', async (req, res) => {
+    // picking email and otp from req body
+    try{
     const { email, enteredOtp } = req.body;
     if (!enteredOtp) {
         return res.status(400).json({ message: "OTP is required" });
@@ -57,19 +63,25 @@ app.post('/verify-otp', async (req, res) => {
     if (otpEntry.otp != enteredOtp) {
         return res.status(400).json({ message: "OTP expired or invalid" });
     }
-    const token = jwt.sign({ email , user_id}, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // jwt token generation for user 
+
+    const token = jwt.sign({ email, user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     await OTP.deleteOne({ email });
     let user = await User.findOne({ email });
     if (!user) {
-        user = new User({ email, user_id: generateUserId() , isverified: true });
+        user = new User({ email, user_id: generateUserId(), isverified: true });
         await user.save();
     }
     else {
         user.isverified = true;
         await user.save();
     }
-    res.json({ message: "OTP verified successfully" , user , token});
-
+    res.json({ message: "OTP verified successfully", user, token });
+    }
+    catch(error) {      
+        console.error('Error verifying OTP:', error);   
+        res.status(500).json({ message: "Internal server error" });
+    }
 })
 
 app.listen(PORT, () => {
