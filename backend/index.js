@@ -29,14 +29,14 @@ app.get('/', (req, res) => {
 })
 
 // signup for user
-app.post('/sighnup', async (req, res) => {
+app.post('/signup', async (req, res) => {
 
     const { email } = req.body;
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
     }
     //checker for valid mail
-    if (!email.toLowerCase().endsWith('.cuchd.in')) {
+    if (!email.toLowerCase().endsWith('@cuchd.in')) {
         return res.status(400).json({ message: "Please use your college email" });
     }
     //generate otp ()
