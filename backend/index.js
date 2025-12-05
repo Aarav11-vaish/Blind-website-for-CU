@@ -51,6 +51,7 @@ app.post('/signup', async (req, res) => {
     res.json({ message: "OTP sent to email" });
 }
 )
+
 app.post('/verify-otp', async (req, res) => {
   try {
     const { email, enteredOtp } = req.body;
