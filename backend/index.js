@@ -40,14 +40,17 @@ app.post('/signup', async (req, res) => {
     if (!email.toLowerCase().endsWith('@cuchd.in')) {
         return res.status(400).json({ message: "Please use your college email" });
     }
+    if(await OTP.findOne({email})){
+      return res.status(400).json({ message: "OTP already sent to this email" });
+    }
     //generate otp ()
     const otp = generateOTP();
     //saving the otp for some time
     const newOtpEntry = new OTP({ email, otp });
-    await newOtpEntry.save();
     // send otp to email
     await sendEmail(email, otp);
-
+    await newOtpEntry.save();
+    
     res.json({ message: "OTP sent to email" });
 }
 )
