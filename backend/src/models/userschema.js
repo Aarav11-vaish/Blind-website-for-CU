@@ -3,8 +3,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     user_id: { type: String, required: true, unique: true },
   user_name:{
-  type: string, 
-    required: true,
+  type: String, 
     unique:true
   },
     graduation_year: { type: Number },
