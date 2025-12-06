@@ -6,89 +6,188 @@
   :root {
     --radius: 0.5rem;
 
-    /* Light Theme */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* LIGHT THEME — from your prototype */
+    --background: 210 40% 98%;
+    /* #F8FAFC */
+    --foreground: 222 47% 11%;
+    /* #1E293B */
+
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    /* white */
+    --card-foreground: 222 47% 11%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 214 32% 91%;
+    /* #E2E8F0 */
+    --input: 214 32% 91%;
 
-    /* Primary (Blue) */
-    --primary: 0 0% 9%;
-    /* #3B82F6 */
-    --primary-foreground: 0 0% 98%;
+    --primary: 0 72% 51%;
+    /* #DC2626 */
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary (Red) */
-    --secondary: 0 0% 96.1%;
-    /* #EF4444 */
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 215 20% 90%;
+    /* subtle gray */
+    --secondary-foreground: 215 25% 20%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --muted: 215 20% 90%;
+    --muted-foreground: 215 16% 45%;
 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --accent: 215 20% 88%;
+    --accent-foreground: 222 47% 11%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 222 47% 11%;
+
+    --ring: 0 72% 51%;
+    /* primary red */
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Deep navy background */
+    --background: 222 65% 7%;
+    /* #0B1120 */
 
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+    /* Text */
+    --foreground: 215 20% 92%;
+    /* #E2E8F0 */
 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    /* Card (dark slate) */
+    --card: 215 32% 17%;
+    /* #1E293B */
+    --card-foreground: 215 20% 92%;
 
-    /* Primary (Blue) */
-    --primary: 0 0% 98%;
-    /* #60A5FA */
-    --primary-foreground: 0 0% 9%;
+    /* Borders (dark blue-gray) */
+    --border: 215 25% 23%;
+    /* #283548 */
+    --input: 215 25% 23%;
 
-    /* Secondary (Red) */
-    --secondary: 0 0% 14.9%;
-    /* #F87171 */
-    --secondary-foreground: 0 0% 98%;
+    /* Primary red */
+    --primary: 0 72% 51%;
+    /* #DC2626 */
+    --primary-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --primary-hover: 0 73% 40%;
+    /* #B91C1C */
 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    /* Muted areas */
+    --muted: 215 20% 15%;
+    /* #1A2433 */
+    --muted-foreground: 215 15% 75%;
+    /* #A8B3C1 */
 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Accent */
+    --accent: 215 32% 17%;
+    /* matches card */
+    --accent-foreground: 215 20% 92%;
+
+    /* Popover */
+    --popover: 215 32% 17%;
+    --popover-foreground: 215 20% 92%;
+
+    /* Red ring */
+    --ring: 0 72% 51%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
   }
+
+
 }
-
-
 
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Bubble Animations for Glassmorphic Sign In Page */
+.animate-bubble1 {
+  animation: bubbleMove1 12s infinite alternate;
+}
+
+.animate-bubble2 {
+  animation: bubbleMove2 14s infinite alternate;
+}
+
+.animate-bubble3 {
+  animation: bubbleMove3 10s infinite alternate;
+}
+
+.animate-bubble4 {
+  animation: bubbleMove4 16s infinite alternate;
+}
+
+.animate-bubble5 {
+  animation: bubbleMove5 18s infinite alternate;
+}
+
+.animate-bubble6 {
+  animation: bubbleMove6 20s infinite alternate;
+}
+
+@keyframes bubbleMove1 {
+  0% {
+    transform: translateY(0)
+  }
+
+  100% {
+    transform: translateY(40px) scale(1.1)
+  }
+}
+
+@keyframes bubbleMove2 {
+  0% {
+    transform: translateY(0)
+  }
+
+  100% {
+    transform: translateY(-30px) scale(1.05)
+  }
+}
+
+@keyframes bubbleMove3 {
+  0% {
+    transform: translateX(0)
+  }
+
+  100% {
+    transform: translateX(30px) scale(1.08)
+  }
+}
+
+@keyframes bubbleMove4 {
+  0% {
+    transform: translateY(0)
+  }
+
+  100% {
+    transform: translateY(20px) scale(1.12)
+  }
+}
+
+@keyframes bubbleMove5 {
+  0% {
+    transform: translateX(0)
+  }
+
+  100% {
+    transform: translateX(-20px) scale(1.07)
+  }
+}
+
+@keyframes bubbleMove6 {
+  0% {
+    transform: translateY(0)
+  }
+
+  100% {
+    transform: translateY(-15px) scale(1.09)
   }
 }
