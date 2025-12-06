@@ -9,6 +9,7 @@ import generateOTP from './src/services/generateOTP.js';
 import { OTP } from './src/models/otpSchema.js';
 import { User } from './src/models/userschema.js';
 import { v4 as uuidv4 } from "uuid";
+import { uniqueNamesGenerator, adjectives , colors , animals } from 'unique-names-generator';
 // Load environment variables from .env file
 dotenv.config();
 const app = express();
@@ -21,7 +22,7 @@ mongoose.connect(process.env.MONGO_URI, {
 }).then(() => {
     console.log('Connected to MongoDB');
 }).catch((err) => {
-    console.error('Error connecting to MongoDB:', err);
+    console.error('Error connecting to MongoDB:', err);    
 });
 
 app.get('/', (req, res) => {
@@ -81,10 +82,11 @@ app.post('/verify-otp', async (req, res) => {
     if (!user) {
       // Use UUID for new users
       const newUserId = uuidv4();
-
+const randomName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] }); // big_red_donkey
       user = await User.create({
         email,
         user_id: newUserId,
+        randomName,
         isverified: true
       });
     } else {
