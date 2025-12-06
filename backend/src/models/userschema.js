@@ -4,7 +4,6 @@ const userSchema = new mongoose.Schema({
     user_id: { type: String, required: true, unique: true },
   user_name:{
   type: String, 
-    unique:true
   },
     graduation_year: { type: Number },
     isverified: { type: Boolean, default: false },
