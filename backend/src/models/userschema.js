@@ -2,10 +2,10 @@ import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     user_id: { type: String, required: true, unique: true },
-    communities: [{
-        type: String,
-    },
-    ],
+  user_name:{
+  type: String, 
+    unique:true
+  },
     graduation_year: { type: Number },
     isverified: { type: Boolean, default: false },
 },
