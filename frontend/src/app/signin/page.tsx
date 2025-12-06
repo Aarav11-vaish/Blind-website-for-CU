@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,16 +14,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { OTPInput } from "@/components/ui/otp-input";
-import { requestOTP, verifyOTP } from "@/lib/api";
 import { Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/ui/use-toast";
+import { requestOTP, verifyOTP } from "@/lib/api";
 
 export default function SigninPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState(false);
+
+  const [isDark, setIsDark] = useState(false);
+
+  // POSTER HANDLING — Full solution
+  const [poster, setPoster] = useState("/poster-light.jpg");
+
+  // Set poster immediately on mount
+  useEffect(() => {
+    const theme = localStorage.getItem("theme");
+
+    if (theme === "dark") {
+      setPoster("/poster-dark.jpg");
+    } else {
+      setPoster("/poster-light.jpg");
+    }
+  }, []);
+
+  // Update poster instantly when theme is toggled
+  useEffect(() => {
+    const handler = () => {
+      const theme = localStorage.getItem("theme");
+      setPoster(theme === "dark" ? "/poster-dark.jpg" : "/poster-light.jpg");
+    };
+
+    window.addEventListener("theme-change", handler);
+    return () => window.removeEventListener("theme-change", handler);
+  }, []);
+
+  // --------------------------
+  //  HANDLERS
+  // --------------------------
 
   const handleSendOTP = async () => {
     if (!email) {
@@ -32,12 +66,13 @@ export default function SigninPage() {
       });
       return;
     }
+
     setLoading(true);
     try {
       await requestOTP(email);
       toast({
         title: "OTP Sent",
-        description: `An OTP has been sent to ${email}. Please check your inbox (and spam folder).`,
+        description: `An OTP has been sent to ${email}.`,
         variant: "success",
       });
       setStep("otp");
@@ -56,29 +91,32 @@ export default function SigninPage() {
     if (otp.length !== 6) {
       toast({
         title: "Invalid OTP",
-        description: "Please enter the complete 6-digit OTP.",
+        description: "Please enter the full 6-digit OTP.",
         variant: "error",
       });
       return;
     }
+
     setLoading(true);
     try {
       const response = await verifyOTP(email, otp);
+
       toast({
         title: "Sign in successful!",
         description: "Redirecting...",
         variant: "success",
       });
+
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
+
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
     } catch (err) {
       toast({
         title: "Failed to verify OTP",
-        description:
-          err instanceof Error ? err.message : "Failed to verify OTP",
+        description: err instanceof Error ? err.message : "Error verifying OTP",
         variant: "error",
       });
     } finally {
@@ -92,36 +130,38 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left panel */}
-      <div className="hidden md:flex w-1/2 items-center justify-center bg-gradient-to-br from-primary to-secondary text-primary-foreground dark:text-white p-8">
-        <div className="max-w-xs text-center space-y-6">
-          <div className="text-4xl font-extrabold tracking-tight">Blind CU</div>
-          <div className="text-lg opacity-80">
-            Welcome back! Sign in to access your account.
-          </div>
-          <div className="text-xs opacity-60">Chandigarh University</div>
-        </div>
+    <div className="min-h-screen w-full grid grid-cols-1 md:grid-cols-2">
+      {/* LEFT POSTER */}
+      <div className="relative hidden md:block">
+        <Image
+          key={poster}
+          src={poster}
+          alt="Blind CU Poster"
+          fill
+          priority
+          unoptimized
+          className="object-cover object-center"
+        />
       </div>
-      {/* Right panel (form) */}
-      <div className="flex flex-1 items-center justify-center p-4 bg-gradient-to-br from-background to-secondary/60">
-        <Card
-          className="w-full max-w-md shadow-2xl bg-white/60 dark:bg-black/40 backdrop-blur-lg border border-border/60 rounded-2xl"
-          style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.18)" }}
-        >
+
+      {/* RIGHT SIDE: CARD */}
+      <div className="flex items-center justify-center p-6 bg-background">
+        <Card className="w-full max-w-md bg-card shadow-xl border border-border">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+            <CardTitle className="text-3xl font-bold">Sign In</CardTitle>
             <CardDescription>
               {step === "email"
                 ? "Enter your college email to receive an OTP"
                 : "Enter the 6-digit OTP sent to your email"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+
+          <CardContent className="space-y-6">
             {step === "email" ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
+
                   <Input
                     id="email"
                     type="email"
@@ -129,21 +169,18 @@ export default function SigninPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleSendOTP();
-                      }
-                    }}
-                    className="bg-white/80 dark:bg-black/30 border border-border/40 focus:ring-2 focus:ring-primary/40"
+                    onKeyDown={(e) => e.key === "Enter" && handleSendOTP()}
                   />
+
                   <p className="text-sm text-muted-foreground">
-                    Please use your college email (@cuchd.in)
+                    Use your college email (@cuchd.in)
                   </p>
                 </div>
+
                 <Button
                   onClick={handleSendOTP}
                   disabled={loading}
-                  className="w-full rounded-xl font-semibold shadow-sm"
+                  className="w-full font-semibold rounded-lg"
                 >
                   {loading ? (
                     <>
@@ -156,33 +193,36 @@ export default function SigninPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Enter OTP</Label>
+
                   <OTPInput
                     value={otp}
                     onChange={setOtp}
                     length={6}
                     disabled={loading}
-                    className="bg-white/80 dark:bg-black/30 border border-border/40"
                   />
+
                   <p className="text-sm text-muted-foreground text-center">
                     Check your email for the 6-digit code
                   </p>
                 </div>
-                <div className="flex gap-2">
+
+                <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={handleBack}
                     disabled={loading}
-                    className="flex-1 rounded-xl"
+                    className="flex-1 rounded-lg"
                   >
                     Back
                   </Button>
+
                   <Button
                     onClick={handleVerifyOTP}
                     disabled={loading || otp.length !== 6}
-                    className="flex-1 rounded-xl font-semibold"
+                    className="flex-1 font-semibold rounded-lg"
                   >
                     {loading ? (
                       <>
@@ -196,16 +236,11 @@ export default function SigninPage() {
                 </div>
               </div>
             )}
-            <div className="flex justify-between items-center pt-4 text-sm">
-              <Link
-                href="/signup"
-                className="underline font-medium text-foreground hover:text-primary transition-colors"
-              >
-                New here? Sign Up
-              </Link>
+
+            <div className="flex justify-end pt-4 text-sm">
               <Link
                 href="/"
-                className="underline text-muted-foreground hover:text-foreground transition-colors"
+                className="underline text-muted-foreground hover:text-foreground"
               >
                 Back to Home
               </Link>
