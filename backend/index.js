@@ -90,7 +90,7 @@ app.post('/verify-otp', async (req, res) => {
   user = await User.create({
     email,
     user_id: newUserId,
-    randomName,
+    user_name: randomName,
     isverified: true
   });
 } else {
@@ -138,8 +138,11 @@ app.get('/:user_id/profile', async (req, res) => {
 
 });
 
+
+
 app.put('/:user_id/profile/submit', async (req, res) => {
   const { user_id } = req.params;
+  
   const { user_name, graduation_year } = req.body;
   // would like to let user change only user_name and graduation year
   const user = await User.findOne({ user_id });
