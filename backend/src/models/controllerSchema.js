@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 const communityShema= new mongoose.Schema({
 community_id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
