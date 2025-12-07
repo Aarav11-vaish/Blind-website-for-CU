@@ -7,6 +7,10 @@ const userSchema = new mongoose.Schema({
   },
     graduation_year: { type: Number },
     isverified: { type: Boolean, default: false },
+joinedCommunities: {
+  type: [String],
+  default: []
+}
 },
 
     { timestamps: true }

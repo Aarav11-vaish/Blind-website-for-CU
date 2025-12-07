@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import authRoutes from "./src/routes/authroutes.js";
 import userRoutes from "./src/routes/userroutes.js";
-
+import communityroutes from "./src/routes/communityroutes.js";
 dotenv.config();
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Mongo Connected"))
@@ -20,6 +20,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.get("/", (req, res) => res.send("API Running..."));
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
+app.use("/community", communityroutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));
