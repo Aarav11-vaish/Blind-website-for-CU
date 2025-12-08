@@ -34,7 +34,8 @@ catch
 
 
 
-export const likeGlobalPost = async (req, res) => {
+export const likeGlobalPost = async (req, res) => 
+  {
   try {
     const { id } = req.params;
     const { user_id } = req.body;
