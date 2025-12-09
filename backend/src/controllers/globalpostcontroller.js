@@ -1,15 +1,25 @@
-import { GlobalPost } from "../models/globalPostSchema";
+import { GlobalPost } from "../models/globalPostSchema.js";
+import cloudinary from "../utils/cloudinary.js";
 export const createGlobalPost = async(req , res)=>{
     try{
-const { user_id, randomName, content, images } = req.body;
+const { user_id, randomName, content} = req.body;
 if(!user_id || !randomName || !content){
     return res.status(400).json({ message: "user_id, randomName and content are required." });
+}
+let imagesUrls = [];
+if (req.files && req.files.length > 0) {
+  for (const file of req.files) {
+    const result = await cloudinary.uploader.upload(file.path, {
+      folder: "blind_cu_posts",
+    });
+    imagesUrls.push(result.secure_url);
+  }
 }
 const newPost = new GlobalPost({
     user_id,
     randomName,
     content,
-    images: images || []
+    images: imagesUrls||[]
 });
 await newPost.save();
 res.status(201).json({ message: "Global post created successfully", post: newPost });
@@ -64,4 +74,3 @@ export const likeGlobalPost = async (req, res) =>
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
