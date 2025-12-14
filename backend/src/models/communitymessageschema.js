@@ -5,9 +5,9 @@ const communityMessageschema = new mongoose.Schema({
         user_id: { type: String, required: true },
         randomName: { type: String, required: true },
         message: {type: String, required:true}, 
-        images: {type : [string], default : []}
-})
+        images: {type : [String], default : []}
+}, {timestamps: true})
 
-const communitymessage = mongoose.model("communitymessage", communityMessageschema);
-export default communitymessage;
+const CommunityMessage = mongoose.model("CommunityMessage", communityMessageschema);
+export default CommunityMessage;
 
