@@ -13,15 +13,15 @@ export const getcommunities = async(req , res)=>{
 
 export const joincommunity= async(req , res)=>{
     try{
-const {user_id , Community_id} = req.body;
+const {user_id , community_id} = req.body;
 let user = await User.findOne({user_id});
 if(!user){
     return res.status(400).json({message: "User not found"});
 }
- user.joinedCommunities.push(Community_id);
+ user.joinedCommunities.push(community_id);
 await user.save();
   await Community.updateOne(
-    { Community_id },
+    { community_id },
     { $inc: { memberCount: 1 } }
   );
 return  res.json({message: "Joined Community Successfully"});
@@ -33,17 +33,17 @@ return  res.json({message: "Joined Community Successfully"});
 
 export const leavecommunity= async(req , res)=>{
     try{
-const {user_id , Community_id} = req.body;
+const {user_id , community_id} = req.body;
 let user = await User.findOne({user_id});
 if(!user){
     return res.status(400).json({message: "User not found"});
 }
  user.joinedCommunities = user.joinedCommunities.filter(
-    (commId) => commId !== Community_id
+    (commId) => commId !== community_id
   );
 await user.save();
   await Community.updateOne(
-    { Community_id },
+    { community_id },
     { $inc: { memberCount: -1 } }
   );
 return  res.json({message: "Left Community Successfully"});
