@@ -7,6 +7,7 @@ import authRoutes from "./src/routes/authroutes.js";
 import userRoutes from "./src/routes/userroutes.js";
 import communityroutes from "./src/routes/communityroutes.js";
 import globalpostroutes from "./src/routes/globalpostroutes.js";
+import { initsocket } from "./src/socket.js";
 dotenv.config();
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Mongo Connected"))
@@ -15,6 +16,8 @@ mongoose.connect(process.env.MONGO_URI)
   
   
   const app = express();
+  const server = http.createServer(app);
+  initsocket(server);
   app.use(cors());
   app.use(bodyParser.json());
   
