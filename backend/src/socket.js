@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import CommunityMessage from './schemas/communitymessageSchema.js';
+import CommunityMessage from './models/communitymessageschema.js';
 
 import cloudinary from "./utils/cloudinary.js";
 
