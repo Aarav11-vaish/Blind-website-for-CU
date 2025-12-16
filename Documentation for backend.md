@@ -543,6 +543,48 @@ or
 
 ---
 
+#Community posting messages 
+
+
+###community posting system uses Socket.IO for real-time messaging within communities. Messages are stored in MongoDB and broadcast to all users in that community room.
+- `How It Works:`
+1. Join a Community (Socket Event)
+javascriptsocket.emit("join_community", community_id);
+
+User joins a Socket.IO room named after the community_id
+All messages sent to this community will be received by users in this room
+
+2. Send a Message (Socket Event)
+   
+```javascriptsocket.emit("send_message", {
+    community_id: "placements",
+    user_id: "user123",
+    randomName: "CoolPanda",
+    message: "Hey everyone!",
+    images: ["base64_image_data"] // optional
+});
+```
+Backend Process:
+
+Uploads images to Cloudinary (if provided)
+Saves message to MongoDB
+Broadcasts message to all users in the community room via received_message event
+
+```
+3. Receive Messages (Socket Event - Client Side)
+javascriptsocket.on("received_message", (newMessage) => {
+    console.log(newMessage);
+    // Display message in UI
+});
+
+```
+```
+
+#### **4. Fetch Message History (REST API)**
+```
+GET /communitypost/:community_id/messages
+Authorization: Bearer <token>
+
 
 
 
