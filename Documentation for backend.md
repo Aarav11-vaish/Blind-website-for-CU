@@ -543,10 +543,10 @@ or
 
 ---
 
-#Community posting messages 
+# Community posting messages 
 
 
-###community posting system uses Socket.IO for real-time messaging within communities. Messages are stored in MongoDB and broadcast to all users in that community room.
+### community posting system uses Socket.IO for real-time messaging within communities. Messages are stored in MongoDB and broadcast to all users in that community room.
 - `How It Works:`
 1. Join a Community (Socket Event)
 javascriptsocket.emit("join_community", community_id);
