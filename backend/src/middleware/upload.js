@@ -7,12 +7,14 @@ const fileFilter = (req, file, cb) => {
     file.mimetype === "image/jpeg" ||
     file.mimetype === "image/png" ||
     file.mimetype === "image/jpg" ||
-    file.mimetype === "image/webp"
+    file.mimetype === "image/webp"||
+    file.mimetype==="image/gif"||
+       file.mimetype=== "image/svg+xml"   // Add SVG if needed
+
   ) {
     cb(null, true);
   } else {
-    cb(new Error("Only JPEG, PNG, JPG, and WEBP files are allowed"));
-  }
+cb(new Error(`Only image files are allowed. Received: ${file.mimetype}`));  }
 };
 
 export const upload = multer({
