@@ -8,6 +8,7 @@ import userRoutes from "./src/routes/userroutes.js";
 import communityroutes from "./src/routes/communityroutes.js";
 import globalpostroutes from "./src/routes/globalpostroutes.js";
 import communitymessageroutes from "./src/routes/communitymessageroutes.js";
+import http from "http";
 import { initsocket } from "./src/socket.js";
 
 dotenv.config();
@@ -30,4 +31,4 @@ app.use("/community", communityroutes);
 app.use("/globalpost", globalpostroutes);
 app.use("/communitypost", communitymessageroutes);
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on ${PORT}`));
