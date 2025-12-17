@@ -23,7 +23,7 @@ export const signin = async (req, res) => {
   await sendEmail(email, otp);
   await OTP.create({ email, otp });
 
-  res.json({ message: "OTP sent" });
+  res.json({ message: "OTP is sent to ", email});
 };
 
 export const verifyOtp = async (req, res) => {
