@@ -13,7 +13,7 @@ export const signin = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
 
   if (!email.endsWith("@cuchd.in"))
-    return res.status(400).json({ message: "Please use your college email" });
+    return res.status(400).json({ message: "Please use your CU college emailID" });
 
   if (await OTP.findOne({ email }))
     return res.status(400).json({ message: "OTP already sent" });
