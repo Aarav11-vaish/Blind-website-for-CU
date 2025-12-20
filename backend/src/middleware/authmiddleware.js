@@ -9,7 +9,7 @@ export const authmiddleware = (req, res, next) => {
         }
         const token = authheader.split(" ")[1];//[bearer ,token]
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;//attach user info to req object
         next();
     }
