@@ -46,56 +46,68 @@
   }
 
   .dark {
-    /* Deep navy background */
-    --background: 222 65% 7%;
-    /* #0B1120 */
+    /* Very dark background - swapped with cards */
+    --background: 220 39% 7%;
+    /* #0F172A - Very dark background */
 
-    /* Text */
-    --foreground: 215 20% 92%;
-    /* #E2E8F0 */
+    /* Bright white text for high contrast */
+    --foreground: 0 0% 95%;
+    /* #f2f2f2 - Very light text */
 
-    /* Card (dark slate) */
-    --card: 215 32% 17%;
-    /* #1E293B */
-    --card-foreground: 215 20% 92%;
+    /* Lighter cards on dark background */
+    --card: 220 39% 14%;
+    /* #252d3a - Less dark cards */
+    --card-foreground: 0 0% 95%;
 
-    /* Borders (dark blue-gray) */
-    --border: 215 25% 23%;
-    /* #283548 */
-    --input: 215 25% 23%;
+    /* Darker borders for better definition */
+    --border: 220 13% 18%;
+    /* #2d3748 - Darker borders */
+    --input: 220 13% 18%;
 
-    /* Primary red */
-    --primary: 0 72% 51%;
-    /* #DC2626 */
+    /* Vibrant red primary - same as your screenshot */
+    --primary: 0 84% 60%;
+    /* #f56565 - Brighter red */
     --primary-foreground: 0 0% 100%;
 
     --primary-hover: 0 73% 40%;
     /* #B91C1C */
 
-    /* Muted areas */
-    --muted: 215 20% 15%;
-    /* #1A2433 */
-    --muted-foreground: 215 15% 75%;
-    /* #A8B3C1 */
+    /* Muted areas matching cards */
+    --muted: 220 39% 14%;
+    /* #252d3a - Matching card color */
+    --muted-foreground: 220 9% 46%;
+    /* #718096 - Medium gray text */
 
-    /* Accent */
-    --accent: 215 32% 17%;
-    /* matches card */
-    --accent-foreground: 215 20% 92%;
+    /* Accent matching cards */
+    --accent: 220 39% 14%;
+    --accent-foreground: 0 0% 95%;
 
-    /* Popover */
-    --popover: 215 32% 17%;
-    --popover-foreground: 215 20% 92%;
+    --popover: 220 39% 14%;
+    --popover-foreground: 0 0% 95%;
 
-    /* Red ring */
-    --ring: 0 72% 51%;
+    /* Bright red ring */
+    --ring: 0 84% 60%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+
+    /* Secondary colors */
+    --secondary: 220 39% 14%;
+    --secondary-foreground: 0 0% 95%;
   }
 
 
 }
+
+/* @layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+} */
 
 @layer base {
   * {
@@ -106,6 +118,7 @@
     @apply bg-background text-foreground;
   }
 }
+
 
 /* Bubble Animations for Glassmorphic Sign In Page */
 .animate-bubble1 {
@@ -190,4 +203,309 @@
   100% {
     transform: translateY(-15px) scale(1.09)
   }
+}
+
+/* Accessibility Enhancements */
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Show screen reader content when focused */
+.sr-only:focus,
+.sr-only:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0.5rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  border: 2px solid theme('colors.primary.DEFAULT');
+  border-radius: 0.375rem;
+  background: theme('colors.card.DEFAULT');
+  color: theme('colors.foreground');
+  z-index: 50;
+}
+
+.dark .sr-only:focus,
+.dark .sr-only:active {
+  background: theme('colors.card.DEFAULT');
+  color: theme('colors.foreground');
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    border-color: ButtonText !important;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border: 2px solid ButtonText !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable specific animations */
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .animate-bubble1,
+  .animate-bubble2,
+  .animate-bubble3,
+  .animate-bubble4,
+  .animate-bubble5,
+  .animate-bubble6 {
+    animation: none !important;
+  }
+
+  /* Disable transforms */
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover {
+    transform: none !important;
+  }
+}
+
+/* Focus indicators */
+.focus-visible:focus-visible {
+  outline: 2px solid theme('colors.primary.DEFAULT');
+  outline-offset: 2px;
+}
+
+/* Touch target minimum size */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure minimum touch target size */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"],
+[role="link"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Better focus for interactive elements */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible {
+  outline: 2px solid theme('colors.primary.DEFAULT');
+  outline-offset: 2px;
+}
+
+/* Skip link styling */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: theme('colors.primary.DEFAULT');
+  color: theme('colors.primary.foreground');
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Improve text readability */
+p,
+li,
+span {
+  line-height: 1.6;
+}
+
+/* Better spacing for touch devices */
+@media (pointer: coarse) {
+
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="link"] {
+    min-height: 48px;
+    padding: 12px 16px;
+  }
+}
+
+/* Design System Enhancements */
+
+/* Smooth transitions for all interactive elements */
+button,
+input,
+select,
+textarea,
+[role="button"],
+[role="link"],
+.cursor-pointer {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Interactive element focus improvements */
+.interactive-focus:focus-visible {
+  outline: 2px solid theme('colors.primary.DEFAULT');
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Button press animation */
+.button-press:active {
+  transform: scale(0.98);
+}
+
+/* Loading shimmer effect */
+.shimmer {
+  background: linear-gradient(90deg,
+      theme('colors.muted.DEFAULT') 0%,
+      theme('colors.background') 50%,
+      theme('colors.muted.DEFAULT') 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(90deg,
+      theme('colors.muted.DEFAULT') 0%,
+      theme('colors.background') 50%,
+      theme('colors.muted.DEFAULT') 100%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Fade in animation */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in animation */
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Slide in animation */
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Pulse animation for loading states */
+.pulse-subtle {
+  animation: pulseSubtle 2s infinite;
+}
+
+@keyframes pulseSubtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Notification badge animation */
+.notification-bounce {
+  animation: notificationBounce 0.6s ease-out;
+}
+
+@keyframes notificationBounce {
+  0% {
+    transform: scale(0);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Smooth color transitions for theme switching */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
