@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,28 +22,20 @@ import { toast } from "@/components/ui/use-toast";
 import { requestOTP, verifyOTP } from "@/lib/api";
 
 export default function SigninPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState(false);
 
-  const [isDark, setIsDark] = useState(false);
-
-  // POSTER HANDLING — Full solution
   const [poster, setPoster] = useState("/poster-light.jpg");
 
-  // Set poster immediately on mount
   useEffect(() => {
     const theme = localStorage.getItem("theme");
-
-    if (theme === "dark") {
-      setPoster("/poster-dark.jpg");
-    } else {
-      setPoster("/poster-light.jpg");
-    }
+    setPoster(theme === "dark" ? "/poster-dark.jpg" : "/poster-light.jpg");
   }, []);
 
-  // Update poster instantly when theme is toggled
   useEffect(() => {
     const handler = () => {
       const theme = localStorage.getItem("theme");
@@ -52,10 +45,6 @@ export default function SigninPage() {
     window.addEventListener("theme-change", handler);
     return () => window.removeEventListener("theme-change", handler);
   }, []);
-
-  // --------------------------
-  //  HANDLERS
-  // --------------------------
 
   const handleSendOTP = async () => {
     if (!email) {
@@ -102,17 +91,22 @@ export default function SigninPage() {
       const response = await verifyOTP(email, otp);
 
       toast({
-        title: "Sign in successful!",
-        description: "Redirecting...",
+        title: "Welcome Back!",
+        description: "Sign in successful. Redirecting to dashboard...",
         variant: "success",
       });
 
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
 
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1500);
+      // Check for redirect destination
+      const redirectPath = localStorage.getItem("redirectAfterLogin");
+      if (redirectPath) {
+        localStorage.removeItem("redirectAfterLogin");
+        router.push(redirectPath);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       toast({
         title: "Failed to verify OTP",
@@ -144,11 +138,22 @@ export default function SigninPage() {
         />
       </div>
 
-      {/* RIGHT SIDE: CARD */}
-      <div className="flex items-center justify-center p-6 bg-background">
-        <Card className="w-full max-w-md bg-card shadow-xl border border-border">
+      {/* RIGHT SIDE */}
+      <div className="flex items-center justify-center p-6 
+        bg-background-light dark:bg-background-dark">
+
+        <Card
+          className="
+            w-full max-w-md shadow-xl
+            bg-card-light dark:bg-card-dark
+            border border-border-light dark:border-border-dark
+          "
+        >
           <CardHeader>
-            <CardTitle className="text-3xl font-bold">Sign In</CardTitle>
+            <CardTitle className="text-3xl font-bold">
+              Sign In
+            </CardTitle>
+
             <CardDescription>
               {step === "email"
                 ? "Enter your college email to receive an OTP"
@@ -172,7 +177,8 @@ export default function SigninPage() {
                     onKeyDown={(e) => e.key === "Enter" && handleSendOTP()}
                   />
 
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm 
+                    text-muted-foreground-light dark:text-muted-foreground-dark">
                     Use your college email (@cuchd.in)
                   </p>
                 </div>
@@ -204,7 +210,8 @@ export default function SigninPage() {
                     disabled={loading}
                   />
 
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-sm text-center
+                    text-muted-foreground-light dark:text-muted-foreground-dark">
                     Check your email for the 6-digit code
                   </p>
                 </div>
@@ -240,7 +247,13 @@ export default function SigninPage() {
             <div className="flex justify-end pt-4 text-sm">
               <Link
                 href="/"
-                className="underline text-muted-foreground hover:text-foreground"
+                className="
+                  underline
+                  text-muted-foreground-light
+                  hover:text-foreground-light
+                  dark:text-muted-foreground-dark
+                  dark:hover:text-foreground-dark
+                "
               >
                 Back to Home
               </Link>
