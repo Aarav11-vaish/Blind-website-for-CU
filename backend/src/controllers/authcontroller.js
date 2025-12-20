@@ -13,7 +13,7 @@ export const signin = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
 
   if (!email.endsWith("@cuchd.in"))
-    return res.status(400).json({ message: "Please use your college email" });
+    return res.status(400).json({ message: "Please use your CU college emailID" });
 
   if (await OTP.findOne({ email }))
     return res.status(400).json({ message: "OTP already sent" });
@@ -23,7 +23,7 @@ export const signin = async (req, res) => {
   await sendEmail(email, otp);
   await OTP.create({ email, otp });
 
-  res.json({ message: "OTP sent" });
+  res.json({ message: "OTP is sent to ", email});
 };
 
 export const verifyOtp = async (req, res) => {

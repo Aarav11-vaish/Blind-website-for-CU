@@ -1,7 +1,7 @@
-import {CommunityMessage} from "../models/communitymessageschema.js"
+import CommunityMessage from "../models/communitymessageschema.js"
 
 
-export const getComunityMessages = async( req , res)=>{
+export const getCommunityMessages = async( req , res)=>{
     const {community_id} = req.params;
     try{
 const message =await CommunityMessage.find({community_id}).sort({createdAt: 1});
