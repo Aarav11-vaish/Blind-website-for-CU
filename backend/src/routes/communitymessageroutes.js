@@ -1,6 +1,6 @@
 import { getCommunityMessages } from "../controllers/communitypostcontroller.js";
 import express from "express";
-import { authmiddleware } from "../middleware/authmiddleware";
+import { authmiddleware } from "../middleware/authmiddleware.js";
 
 const router = express.Router();
 
