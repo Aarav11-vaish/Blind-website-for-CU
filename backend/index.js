@@ -7,6 +7,10 @@ import authRoutes from "./src/routes/authroutes.js";
 import userRoutes from "./src/routes/userroutes.js";
 import communityroutes from "./src/routes/communityroutes.js";
 import globalpostroutes from "./src/routes/globalpostroutes.js";
+import communitymessageroutes from "./src/routes/communitymessageroutes.js";
+import http from "http";
+import { initsocket } from "./src/socket.js";
+
 dotenv.config();
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Mongo Connected"))
@@ -15,6 +19,8 @@ mongoose.connect(process.env.MONGO_URI)
   
   
   const app = express();
+  const server = http.createServer(app);
+  initsocket(server);
   app.use(cors());
   app.use(bodyParser.json());
   
@@ -23,6 +29,6 @@ app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/community", communityroutes);
 app.use("/globalpost", globalpostroutes);
-
+app.use("/communitypost", communitymessageroutes);
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on ${PORT}`));
