@@ -39,6 +39,8 @@ export const initsocket = (server)=>{
           });
           imageUrls.push(upload.secure_url);
         }
+        //that is this loop doing 
+// it is taking each image in the images array, uploading it to Cloudinary, and storing the secure URL of the uploaded image in the imageUrls array.
 
         // Save message to DB
         const newMessage = await CommunityMessage.create({
