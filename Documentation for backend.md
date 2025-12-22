@@ -589,3 +589,150 @@ Authorization: Bearer <token>
 
 
 
+
+# Global Post Comment API Documentation
+
+## Overview
+This API allows users to add comments to **Global Posts**.  
+Comments are anonymous (via `randomName`) and are stored inside the global post document.
+
+---
+
+## Endpoint
+**POST** `/globalpost/:id/comment`
+
+---
+
+## Authentication Required
+✅ Yes (JWT via `authmiddleware`)
+
+---
+
+## Description
+Adds a new comment to a global post identified by its post ID.  
+Each comment updates the `commentsCount` automatically.
+
+---
+
+## Request
+
+### Method
+`POST`
+
+### Headers
+| Key | Value | Required | Description |
+|-----|------|----------|-------------|
+| Authorization | Bearer `<token>` | Yes | User authentication token |
+| Content-Type | application/json | Yes | Request body format |
+
+---
+
+### Path Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | string | Yes | Global post ID |
+
+---
+
+### Body Parameters
+```json
+{
+  "user_id": "u123",
+  "randomName": "SilentEagle",
+  "comment": "This is a comment"
+}
+```
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| user_id | string | Yes | ID of the commenting user |
+| randomName | string | Yes | Anonymous display name |
+| comment | string | Yes | Comment text |
+
+---
+
+## Success Response
+
+### Status Code
+`201 Created`
+
+### Sample Response
+```json
+{
+  "message": "Comment added successfully",
+  "comment": {
+    "user_id": "u123",
+    "randomName": "SilentEagle",
+    "content": "This is a comment"
+  }
+}
+```
+
+---
+
+## Error Responses
+
+### 400 Bad Request
+```json
+{
+  "message": "comment cannot be empty"
+}
+```
+
+### 404 Not Found
+```json
+{
+  "message": "Post not found"
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "message": "Server Error"
+}
+```
+
+---
+
+## Schema Reference
+
+### Comment Subdocument
+```js
+{
+  user_id: String,
+  randomName: String,
+  content: String,
+  createdAt: Date
+}
+```
+
+---
+
+## Notes
+- Comments are embedded inside the `GlobalPost` document.
+- `commentsCount` is recalculated after every comment.
+- No image support for comments (text-only).
+- Comments are returned in chronological order (oldest → newest).
+
+---
+
+## Related Endpoints
+- `POST /globalpost/createglobalposts`
+- `GET /globalpost/getglobalposts`
+- `POST /globalpost/:id/like`
+
+---
+
+## Example (cURL)
+
+```bash
+curl -X POST https://api.example.com/globalpost/123/comment \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "u123",
+    "randomName": "SilentEagle",
+    "comment": "Nice post!"
+  }'
+```
