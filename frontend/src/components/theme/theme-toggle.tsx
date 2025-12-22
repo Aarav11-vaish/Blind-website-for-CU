@@ -24,19 +24,34 @@ export function ThemeToggle() {
     });
   }, []);
 
+  // const toggleTheme = () => {
+  //   if (isDark) {
+  //     document.documentElement.classList.remove("dark");
+  //     localStorage.setItem("theme", "light");
+  //     setIsDark(false);
+  //     window.dispatchEvent(new Event("theme-change"));
+  //   } else {
+  //     document.documentElement.classList.add("dark");
+  //     localStorage.setItem("theme", "dark");
+  //     setIsDark(true);
+  //     window.dispatchEvent(new Event("theme-change"));
+  //   }
+  // };
+
   const toggleTheme = () => {
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
+    const root = document.documentElement;
+
+    if (root.classList.contains("dark")) {
+      root.classList.remove("dark");
       localStorage.setItem("theme", "light");
-      setIsDark(false);
-      window.dispatchEvent(new Event("theme-change"));
     } else {
-      document.documentElement.classList.add("dark");
+      root.classList.add("dark");
       localStorage.setItem("theme", "dark");
-      setIsDark(true);
-      window.dispatchEvent(new Event("theme-change"));
     }
+
+    window.dispatchEvent(new Event("theme-change"));
   };
+
 
   return (
     <button
