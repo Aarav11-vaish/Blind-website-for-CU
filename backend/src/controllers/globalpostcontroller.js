@@ -74,3 +74,29 @@ export const likeGlobalPost = async (req, res) =>
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const commentGlobalPost= async(req, res)=>{
+  try{
+const {id}= req.params;
+const { user_id, randomName, comment} = req.body;
+if(!comment){
+return  res.status(400).json({message: "comment cannot be empty"});
+}
+const post = await GlobalPost.findById(id);
+if(!post){
+  return res.status(404).json({message: "Post not found"});
+} 
+const newComment = {
+  user_id ,
+  randomName, 
+  content: comment
+}
+post.comments.push(newComment);
+post.commentsCount = post.comments.length;
+await post.save();
+return res.status(201).json({ message: "Comment added successfully", comment: newComment});
+}
+  catch(e){
+    console.log("error in commenting global post ", e);
+  }
+}
