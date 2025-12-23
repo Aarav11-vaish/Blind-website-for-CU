@@ -15,6 +15,13 @@ if (req.files && req.files.length > 0) {
     imagesUrls.push(result.secure_url);
   }
 }
+// const uploads = req.files.map(file =>
+//   cloudinary.uploader.upload(file.path, { folder: "blind_cu_posts" })
+// );
+// const results = await Promise.all(uploads);
+// imagesUrls = results.map(r => r.secure_url);
+// this commented code is an alternative way to upload images concurrently and it is fast.
+
 const newPost = new GlobalPost({
     user_id,
     randomName,
@@ -112,6 +119,7 @@ export const deleteGlobalPost= async(req , res)=>{
 
   }
   catch(e){
+    console.log("error in deleting global post ", e);
 
   }
 }

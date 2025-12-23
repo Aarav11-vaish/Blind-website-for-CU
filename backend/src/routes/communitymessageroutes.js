@@ -7,6 +7,6 @@ const router = express.Router();
 router.get("/:community_id/messages", authmiddleware, getCommunityMessages);
 router.post('/:id/like', authmiddleware, likeCommunityMessage);
 router.post('/:id/comment', authmiddleware, commentCommunityMessage);
-router.post('/:id/deletecomment', authmiddleware, deleteCommunityMessage);
+router.delete('/:id', authmiddleware, deleteCommunityMessage);
 
 export default router;
