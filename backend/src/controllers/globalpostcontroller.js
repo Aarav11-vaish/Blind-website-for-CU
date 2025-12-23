@@ -100,3 +100,18 @@ return res.status(201).json({ message: "Comment added successfully", comment: ne
     console.log("error in commenting global post ", e);
   }
 }
+
+export const deleteGlobalPost= async(req , res)=>{
+  try{
+   const {id}= req.params;
+    const post = await GlobalPost.findByIdAndDelete(id);
+    if(!post){
+      return res.status(404).json({message: "Post not found"});
+    }
+    return res.status(200).json({message: "Post deleted successfully"});
+
+  }
+  catch(e){
+
+  }
+}

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getglobalfeed, createGlobalPost , likeGlobalPost, commentGlobalPost } from '../controllers/globalpostcontroller.js';
+import { getglobalfeed, createGlobalPost , likeGlobalPost, commentGlobalPost, deleteGlobalPost } from '../controllers/globalpostcontroller.js';
 import {authmiddleware} from '../middleware/authmiddleware.js';
 import { get } from 'mongoose';
 import {upload} from "../middleware/upload.js";
@@ -9,5 +9,6 @@ router.get('/getglobalposts', authmiddleware, getglobalfeed);
 router.post('/createglobalposts', authmiddleware, upload.array("images", 4), createGlobalPost);
 router.post('/:id/like', authmiddleware, likeGlobalPost);
 router.post('/:id/comment', authmiddleware, commentGlobalPost);
+router.post('/:id/deletecomment', authmiddleware, deleteGlobalPost);
 
 export default router;
