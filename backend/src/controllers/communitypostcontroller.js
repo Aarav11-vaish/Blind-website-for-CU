@@ -46,8 +46,37 @@ export const commentCommunityMessage= async(req, res)=>{
     try{
     const {id}= req.params;
     const { user_id, randomName, comment} = req.body;
+    if(!comment){
+    return  res.status(400).json({message: "comment cannot be empty"});
+    }
+    const message = await CommunityMessage.findById(id);
+    if(!message) return res.status(404).json({message: "Message not found"});
+    const newComment= {
+        user_id , 
+        randomName,
+        content: comment
+        
+    }
+    message.comments.push(newComment);
+    message.commentsCount = message.comments.length;
+    await message.save();
+    return res.status(200).json({message: "Comment added successfully", comments: message.comments});
+}
+    catch(e){
+    console.log("error in commenting community message ", e);
+    }
+}
+
+
+export const deleteCommunityMessage= async(req, res)=>{
+    try{
+        const {id}= req.params;
+        const deletedMessage = await CommunityMessage.findByIdAndDelete(id);
+        if(!deletedMessage) return res.status(404).json({message: "Message not found"});
+        return res.status(200).json({message: "Message deleted successfully"});
+
     }
     catch(e){
-
+        console.log("error in deleting community message ", e);
     }
 }
