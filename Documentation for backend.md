@@ -736,3 +736,6 @@ curl -X POST https://api.example.com/globalpost/123/comment \
     "comment": "Nice post!"
   }'
 ```
+
+
+# Community post like docs.
