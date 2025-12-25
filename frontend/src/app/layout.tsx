@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ThemeInit } from "@/components/theme/themeInit";
+import { DebugMonitoring } from "@/components/debug/MonitoringDashboard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,11 +34,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <div className="fixed top-4 right-4 z-50">
-          <ThemeInit/>
+          <ThemeInit />
           <ThemeToggle />
         </div>
         <Toaster />
         {children}
+        <DebugMonitoring />
       </body>
     </html>
   );

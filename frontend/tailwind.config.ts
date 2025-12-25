@@ -135,6 +135,23 @@ const config: Config = {
         lg: "1024px",
         xl: "1280px",
         "2xl": "1536px",
+        // Touch-specific breakpoints
+        "touch-sm": {
+          raw: "(hover: none) and (pointer: coarse) and (min-width: 640px)",
+        },
+        "touch-md": {
+          raw: "(hover: none) and (pointer: coarse) and (min-width: 768px)",
+        },
+        // High contrast support
+        "high-contrast": { raw: "(prefers-contrast: high)" },
+        // Reduced motion support
+        "reduce-motion": { raw: "(prefers-reduced-motion: reduce)" },
+      },
+      spacing: {
+        "safe-top": "env(safe-area-inset-top)",
+        "safe-bottom": "env(safe-area-inset-bottom)",
+        "safe-left": "env(safe-area-inset-left)",
+        "safe-right": "env(safe-area-inset-right)",
       },
     },
   },

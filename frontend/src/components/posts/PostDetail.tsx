@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowUp, MessageCircle, Share2, Clock, Image as ImageIcon, Send } from "lucide-react";
+import { MessageCircle, Share2, Clock, Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { GlobalPost, Comment, likeGlobalPost } from "@/lib/api";
+import { GlobalPost, likeGlobalPost } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, ThumbsUp } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 interface PostDetailProps {
@@ -20,9 +17,22 @@ interface PostDetailProps {
 const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
   const [isLiking, setIsLiking] = useState(false);
   const [localPost, setLocalPost] = useState(post);
-  const [commentText, setCommentText] = useState("");
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [commentError, setCommentError] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  const handleImageError = (imageUrl: string) => {
+    setFailedImages(prev => new Set([...prev, imageUrl]));
+  };
+
+  // Filter valid images
+  const validImages = React.useMemo(() => {
+    if (!localPost.images || !Array.isArray(localPost.images)) return [];
+
+    return localPost.images.filter(img => {
+      if (!img || typeof img !== 'string' || !img.trim()) return false;
+      if (failedImages.has(img)) return false;
+      return true;
+    });
+  }, [localPost.images, failedImages]);
 
   // Get current user ID from localStorage
   const getCurrentUserId = () => {
@@ -37,27 +47,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
     }
   };
 
-  const getCurrentUserName = () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return "Anonymous";
-
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      // Generate a consistent random name based on user ID
-      const userId = payload.user_id || payload.id;
-      if (userId) {
-        const names = ["Anonymous Owl", "Mystery Student", "Campus Ghost", "Silent Voice", "Hidden Truth"];
-        const index = userId.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % names.length;
-        return names[index];
-      }
-      return "Anonymous";
-    } catch {
-      return "Anonymous";
-    }
-  };
-
   const currentUserId = getCurrentUserId();
-  const currentUserName = getCurrentUserName();
   const isLikedByUser = currentUserId ? localPost.likedBy.includes(currentUserId) : false;
 
   const handleLike = async () => {
@@ -94,8 +84,6 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
         variant: wasLiked ? "info" : "success",
       });
     } catch (error) {
-      console.error("Failed to like post:", error);
-
       // Show error toast
       toast({
         title: "Action Failed",
@@ -139,47 +127,6 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
           variant: "error",
         });
       }
-    }
-  };
-
-  const handleCommentSubmit = async () => {
-    if (!commentText.trim() || isSubmittingComment || !currentUserId) return;
-
-    setIsSubmittingComment(true);
-    setCommentError(null);
-
-    try {
-      // Since there's no backend comment API yet, we'll simulate the comment submission
-      // In a real implementation, this would call a backend API
-
-      // For now, show a placeholder message
-      setCommentError("Comment functionality is coming soon! Backend API integration pending.");
-
-      // Simulate what would happen with a real API:
-      // const newComment: Comment = {
-      //   _id: Date.now().toString(),
-      //   user_id: currentUserId,
-      //   randomName: currentUserName,
-      //   content: commentText.trim(),
-      //   createdAt: new Date().toISOString(),
-      //   updatedAt: new Date().toISOString()
-      // };
-
-      // const updatedPost = {
-      //   ...localPost,
-      //   comments: [...localPost.comments, newComment],
-      //   commentsCount: localPost.commentsCount + 1
-      // };
-
-      // setLocalPost(updatedPost);
-      // onPostUpdate?.(updatedPost);
-      // setCommentText("");
-
-    } catch (error) {
-      console.error("Failed to submit comment:", error);
-      setCommentError("Failed to submit comment. Please try again.");
-    } finally {
-      setIsSubmittingComment(false);
     }
   };
 
@@ -237,19 +184,15 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
           </div>
 
           {/* Images */}
-          {localPost.images && localPost.images.length > 0 && (
+          {validImages.length > 0 && (
             <div>
-              {localPost.images.length === 1 ? (
+              {validImages.length === 1 ? (
                 <div className="relative rounded-lg overflow-hidden bg-muted">
                   <img
-                    src={localPost.images[0]}
+                    src={validImages[0]}
                     alt="Post image"
                     className="w-full max-h-[500px] object-contain"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
+                    onError={() => handleImageError(validImages[0])}
                   />
                   <div className="hidden flex items-center justify-center h-32 text-muted-foreground">
                     <ImageIcon className="h-8 w-8" />
@@ -258,17 +201,13 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {localPost.images.map((image, index) => (
-                    <div key={index} className="relative rounded-lg overflow-hidden bg-muted aspect-square">
+                  {validImages.map((image, index) => (
+                    <div key={`${localPost._id}-detail-img-${index}`} className="relative rounded-lg overflow-hidden bg-muted aspect-square">
                       <img
                         src={image}
                         alt={`Post image ${index + 1}`}
                         className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling?.classList.remove('hidden');
-                        }}
+                        onError={() => handleImageError(image)}
                       />
                       <div className="hidden flex items-center justify-center h-full text-muted-foreground">
                         <ImageIcon className="h-6 w-6" />
@@ -337,84 +276,15 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onPostUpdate }) => {
           </h3>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Comment Form */}
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-medium text-primary">
-                  {currentUserName.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 space-y-2">
-                <Textarea
-                  placeholder="Write a comment..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  className="min-h-[80px] resize-none"
-                  disabled={isSubmittingComment}
-                />
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">
-                    Posting as {currentUserName}
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={handleCommentSubmit}
-                    disabled={!commentText.trim() || isSubmittingComment}
-                    className="flex items-center space-x-1"
-                  >
-                    <Send className="h-3 w-3" />
-                    <span>{isSubmittingComment ? "Posting..." : "Post"}</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {commentError && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {commentError}
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Comments List */}
-          <div className="space-y-4">
-            {localPost.comments && localPost.comments.length > 0 ? (
-              localPost.comments.map((comment) => (
-                <div key={comment._id} className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-secondary/50 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-medium text-secondary-foreground">
-                      {comment.randomName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-sm">{comment.randomName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTimeAgo(comment.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">
-                      {comment.content}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <h4 className="text-sm font-medium text-foreground mb-1">No comments yet</h4>
-                <p className="text-sm text-muted-foreground">
-                  Be the first to share your thoughts on this post.
-                </p>
-              </div>
-            )}
+        <CardContent>
+          <div className="text-center py-8">
+            <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <h4 className="text-sm font-medium text-foreground mb-1">
+              Comments coming soon
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              We&apos;re working on bringing you the ability to comment and engage with posts. Stay tuned!
+            </p>
           </div>
         </CardContent>
       </Card>

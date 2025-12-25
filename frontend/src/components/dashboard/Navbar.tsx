@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { designTokens, cn, motionSafe, componentPatterns } from "@/lib/design-system";
 import { toast } from "@/components/ui/use-toast";
 
 interface NavbarProps {
@@ -23,7 +22,7 @@ interface NavbarProps {
 const Navbar = ({ onSidebarToggle }: NavbarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { user, isAuthenticated, logout, redirectToSignin } = useAuth();
+  const { isAuthenticated, logout, redirectToSignin } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -46,138 +45,87 @@ const Navbar = ({ onSidebarToggle }: NavbarProps) => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    // Add visual feedback for search functionality
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Implement search functionality here
-      console.log("Searching for:", searchQuery);
+      router.push(`/dashboard/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-10",
-        "bg-primary dark:bg-background",
-        "border-b",
-        designTokens.border.default,
-        designTokens.shadow.md,
-        designTokens.transition.all
-      )}
-      role="banner"
-    >
+    <header className="sticky top-0 z-10 bg-red-500 dark:bg-slate-800 border-b border-red-600 dark:border-slate-700 shadow-md" role="banner">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
-            {/* Mobile sidebar toggle */}
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* Left: Mobile menu + Brand name */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
             <button
               onClick={onSidebarToggle}
-              className={cn(
-                "md:hidden p-2 rounded-md button-press",
-                "text-white/80 hover:text-white dark:text-muted-foreground dark:hover:text-foreground",
-                "hover:bg-white/10 dark:hover:bg-accent",
-                designTokens.transition.default,
-                designTokens.focus.ring,
-                designTokens.accessibility.touchTarget,
-                motionSafe("hover:scale-105")
-              )}
+              className="md:hidden p-2 rounded-md text-white hover:text-white hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px]"
               aria-label="Toggle navigation menu"
-              aria-expanded={false}
             >
               <Menu className="h-5 w-5" />
             </button>
 
-            <h1 className={cn(
-              "text-white dark:text-foreground",
-              "text-3xl font-bold",
-              designTokens.transition.default,
-              motionSafe("hover:scale-105 cursor-pointer")
-            )}>
+            <h1 className="text-white text-2xl sm:text-3xl font-bold cursor-pointer">
               BlindCU
             </h1>
           </div>
 
-          {/* Enhanced Search with Visual Feedback */}
-          <div className="flex-1 max-w-xl mx-4 hidden md:block">
-            <form onSubmit={handleSearchSubmit} className="relative" role="search">
+          {/* Center: Search bar */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-2xl mx-4 hidden sm:block" role="search">
+            <div className="relative">
               <Search
-                className={`
-                  absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors pointer-events-none
-                  ${isSearchFocused || searchQuery
-                    ? 'text-primary dark:text-primary'
-                    : 'text-muted-foreground'
-                  }
-                `}
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
                 aria-hidden="true"
               />
-
               <Input
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 placeholder="Search communities, posts..."
-                className={cn(
-                  componentPatterns.input,
-                  "pl-10",
-                  designTokens.transition.all,
-                  isSearchFocused && "ring-2 ring-primary border-primary shadow-sm",
-                  !isSearchFocused && designTokens.hover.border,
-                  motionSafe("focus:scale-[1.02]")
-                )}
+                className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder:text-gray-300 focus:bg-white/20 focus:border-white/40"
                 aria-label="Search communities and posts"
                 type="search"
                 autoComplete="off"
               />
-
               {searchQuery && (
-                <div
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  aria-hidden="true"
-                >
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    designTokens.background.primary,
-                    motionSafe(designTokens.animation.pulse)
-                  )} />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+                  <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
                 </div>
               )}
-            </form>
-          </div>
+            </div>
+          </form>
 
-          {/* Right Side Actions */}
-          <nav className="flex items-center space-x-2" role="navigation" aria-label="User actions">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => router.push('/dashboard/search')}
+            className="sm:hidden p-2 rounded-md text-white hover:text-white hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px]"
+            aria-label="Open search page"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+          </button>
+
+          {/* Right: Notifications, Messages, Account */}
+          <nav className="flex items-center space-x-1 flex-shrink-0" role="navigation" aria-label="User actions">
             {/* Notifications */}
             <button
-              className={cn(
-                componentPatterns.interactiveButton,
-                "p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed",
-                "text-white/80 hover:text-white dark:text-muted-foreground dark:hover:text-foreground",
-                "hover:bg-white/10 dark:hover:bg-accent",
-                motionSafe("hover:scale-105 active:scale-95")
-              )}
+              className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-white hover:text-white hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px]"
               aria-label="Notifications (Coming Soon)"
               disabled
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
             </button>
 
             {/* Messages */}
             <button
-              className={cn(
-                componentPatterns.interactiveButton,
-                "p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed",
-                "text-white/80 hover:text-white dark:text-muted-foreground dark:hover:text-foreground",
-                "hover:bg-white/10 dark:hover:bg-accent",
-                motionSafe("hover:scale-105 active:scale-95")
-              )}
+              className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-white hover:text-white hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px]"
               aria-label="Messages (Coming Soon)"
               disabled
             >
-              <MessageCircle className="h-5 w-5" />
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
             </button>
 
             {/* Profile Dropdown */}
@@ -185,111 +133,42 @@ const Navbar = ({ onSidebarToggle }: NavbarProps) => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={cn(
-                      "flex items-center space-x-2 p-2 rounded-md",
-                      "text-white dark:text-foreground",
-                      "hover:bg-white/10 dark:hover:bg-accent",
-                      designTokens.transition.default,
-                      designTokens.focus.ring,
-                      designTokens.accessibility.touchTarget,
-                      motionSafe("hover:scale-105")
-                    )}
+                    className="flex items-center space-x-2 p-2 rounded-md text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-red-500 dark:focus:ring-offset-slate-800 min-h-[44px] min-w-[44px]"
                     aria-label="User menu"
                     aria-haspopup="true"
                   >
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center",
-                        "bg-white/20 border border-white/30 dark:bg-primary/10 dark:border-primary/20",
-                        designTokens.transition.default,
-                        motionSafe("hover:bg-white/30 dark:hover:bg-primary/20")
-                      )}
-                      aria-hidden="true"
-                    >
-                      <User className={cn("h-4 w-4", "text-white dark:text-primary")} />
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-white/20 border border-white/30" aria-hidden="true">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                     </div>
-                    <ChevronDown className={cn(
-                      "h-4 w-4 transition-transform text-white dark:text-foreground",
-                      motionSafe("group-hover:rotate-180")
-                    )} aria-hidden="true" />
+                    <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 transition-transform text-white hidden sm:block" aria-hidden="true" />
                   </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent
-                  align="end"
-                  className={cn(
-                    "w-56",
-                    designTokens.background.card,
-                    "border",
-                    designTokens.border.default,
-                    designTokens.shadow.lg,
-                    motionSafe("animate-in slide-in-from-top-2 duration-200")
-                  )}
-                >
-                  <DropdownMenuLabel className={designTokens.text.primary}>
-                    My Account
-                  </DropdownMenuLabel>
-
-                  <DropdownMenuSeparator className={designTokens.border.default} />
-
-                  <DropdownMenuItem
-                    onClick={handleProfileSettings}
-                    className={cn(
-                      designTokens.text.muted,
-                      designTokens.hover.background,
-                      designTokens.transition.default,
-                      motionSafe("hover:scale-[1.02]"),
-                      "cursor-pointer"
-                    )}
-                  >
+                <DropdownMenuContent align="end" className="w-56 bg-card border border-border shadow-lg">
+                  <DropdownMenuLabel className="text-foreground">My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="border-border" />
+                  
+                  <DropdownMenuItem onClick={handleProfileSettings} className="text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile Settings</span>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={handlePreferences}
-                    className={cn(
-                      designTokens.text.muted,
-                      designTokens.hover.background,
-                      designTokens.transition.default,
-                      motionSafe("hover:scale-[1.02]"),
-                      "cursor-pointer"
-                    )}
-                  >
+                  <DropdownMenuItem onClick={handlePreferences} className="text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Preferences</span>
                   </DropdownMenuItem>
 
-                  <DropdownMenuSeparator className={designTokens.border.default} />
+                  <DropdownMenuSeparator className="border-border" />
 
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className={cn(
-                      designTokens.text.destructive,
-                      "hover:bg-destructive/10 focus:bg-destructive/10",
-                      designTokens.transition.default,
-                      motionSafe("hover:scale-[1.02]")
-                    )}
-                  >
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center",
-                  designTokens.background.muted,
-                  designTokens.transition.default
-                )}
-              >
-                <User
-                  className={cn(
-                    "h-4 w-4",
-                    designTokens.text.primary
-                  )}
-                />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/20">
+                <User className="h-4 w-4 text-white" />
               </div>
             )}
           </nav>

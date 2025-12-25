@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { CommunityList } from "@/components/communities";
-import { ErrorBoundary, ErrorDisplay } from "@/components/error";
+import RouteErrorBoundary from "@/components/error/RouteErrorBoundary";
+import { ErrorDisplay } from "@/components/error";
 import { LoadingOverlay } from "@/components/loading";
 import {
   Community,
@@ -193,7 +194,7 @@ const CommunitiesPage = () => {
   }, [fetchCommunities]);
 
   return (
-    <ErrorBoundary>
+    <RouteErrorBoundary routeName="Communities">
       <DashboardLayout>
         <LoadingOverlay isLoading={loading && !communities?.length}>
           <div className="space-y-6">
@@ -224,7 +225,7 @@ const CommunitiesPage = () => {
           </div>
         </LoadingOverlay>
       </DashboardLayout>
-    </ErrorBoundary>
+    </RouteErrorBoundary>
   );
 };
 
