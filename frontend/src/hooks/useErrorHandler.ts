@@ -19,10 +19,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       const parsed = parseError(error);
 
       // Log error for debugging
-      console.error(
-        `[${context || "Error"}] ${parsed.type}:`,
-        parsed.originalError
-      );
+      console.error(`[${context || "Error"}] ${parsed.type}:`, error);
 
       // Handle different error types
       switch (parsed.type) {

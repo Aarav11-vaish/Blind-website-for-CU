@@ -23,10 +23,6 @@ export function useAuth() {
     isLoading: true,
   });
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -50,7 +46,6 @@ export function useAuth() {
 
           // If token has expired, logout
           if (payload.exp && payload.exp < currentTime) {
-            console.log("Token has expired");
             logout();
             return;
           }
@@ -77,9 +72,20 @@ export function useAuth() {
       }
     } catch (error) {
       console.error("Error checking auth status:", error);
-      logout();
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     }
   }, [logout]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkAuthStatus();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [checkAuthStatus]);
 
   const login = useCallback((user: User, token: string) => {
     localStorage.setItem("token", token);

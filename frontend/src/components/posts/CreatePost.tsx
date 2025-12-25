@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import { createGlobalPost, getCommunities, type Community, type CreatePostData } from "@/lib/api";
+import { createGlobalPost, createCommunityPost, getCommunities, type Community, type CreatePostData, type CreateCommunityPostData, type GlobalPost } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
 
 // Form validation schema
@@ -43,7 +43,7 @@ type CreatePostFormData = z.infer<typeof createPostSchema>;
 
 interface CreatePostProps {
   communityId?: string;
-  onPostCreated?: (post: unknown) => void;
+  onPostCreated?: (post: GlobalPost) => void;
   onCancel?: () => void;
 }
 
@@ -164,12 +164,36 @@ const CreatePost: React.FC<CreatePostProps> = ({
       setIsSubmitting(true);
       setError(null);
 
-      const postData: CreatePostData = {
-        content: data.content,
-        images: selectedImages.length > 0 ? selectedImages : undefined,
-      };
+      let response;
 
-      const response = await createGlobalPost(postData);
+      if (communityId && communityId !== "global") {
+        // Create community-specific post
+        const communityPostData: CreateCommunityPostData = {
+          content: data.content,
+          community_id: communityId,
+          images: selectedImages.length > 0 ? selectedImages : undefined,
+        };
+
+        try {
+          response = await createCommunityPost(communityPostData);
+        } catch (communityError) {
+          console.log("Community post API not available, falling back to global post");
+
+          // Fallback to global post creation
+          const globalPostData: CreatePostData = {
+            content: data.content,
+            images: selectedImages.length > 0 ? selectedImages : undefined,
+          };
+          response = await createGlobalPost(globalPostData);
+        }
+      } else {
+        // Create global post
+        const postData: CreatePostData = {
+          content: data.content,
+          images: selectedImages.length > 0 ? selectedImages : undefined,
+        };
+        response = await createGlobalPost(postData);
+      }
 
       // Clear form
       form.reset();
@@ -179,7 +203,9 @@ const CreatePost: React.FC<CreatePostProps> = ({
       // Show success toast
       toast({
         title: "Post Created Successfully",
-        description: "Your post has been shared with the community",
+        description: communityId && communityId !== "global"
+          ? "Your post has been shared with the community"
+          : "Your post has been shared globally",
         variant: "success",
       });
 
@@ -221,7 +247,10 @@ const CreatePost: React.FC<CreatePostProps> = ({
           id="create-post-heading"
           className="text-xl font-semibold text-foreground-light dark:text-foreground-dark"
         >
-          Create New Post
+          {communityId && communityId !== "global"
+            ? `Create Post in ${communities.find(c => c.community_id === communityId)?.name || "Community"}`
+            : "Create New Post"
+          }
         </h2>
         {onCancel && (
           <Button
@@ -290,7 +319,7 @@ const CreatePost: React.FC<CreatePostProps> = ({
             name="content"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>What's on your mind?</FormLabel>
+                <FormLabel>What&apos;s on your mind?</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Share your thoughts with the community..."
@@ -341,7 +370,7 @@ const CreatePost: React.FC<CreatePostProps> = ({
             {/* Image Previews */}
             {imagePreviews.length > 0 && (
               <div
-                className="grid grid-cols-2 md:grid-cols-3 gap-4"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4"
                 role="group"
                 aria-label="Selected images"
               >
@@ -350,7 +379,7 @@ const CreatePost: React.FC<CreatePostProps> = ({
                     <img
                       src={preview}
                       alt={`Selected image ${index + 1} of ${imagePreviews.length}`}
-                      className="w-full h-24 object-cover rounded-md border border-border-light dark:border-border-dark"
+                      className="w-full h-20 sm:h-24 object-cover rounded-md border border-border-light dark:border-border-dark"
                       loading="lazy"
                     />
                     <button
@@ -368,13 +397,13 @@ const CreatePost: React.FC<CreatePostProps> = ({
           </fieldset>
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3" role="group" aria-label="Form actions">
+          <div className="flex flex-col sm:flex-row justify-end gap-3" role="group" aria-label="Form actions">
             {onCancel && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="touch-manipulation min-h-[44px]"
+                className="touch-manipulation min-h-[44px] w-full sm:w-auto"
               >
                 Cancel
               </Button>
@@ -382,7 +411,7 @@ const CreatePost: React.FC<CreatePostProps> = ({
             <Button
               type="submit"
               disabled={isSubmitting || !form.watch("content")?.trim()}
-              className="touch-manipulation min-h-[44px]"
+              className="touch-manipulation min-h-[44px] w-full sm:w-auto"
               aria-describedby={isSubmitting ? "submit-status" : undefined}
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />}

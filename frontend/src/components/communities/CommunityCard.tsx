@@ -5,7 +5,7 @@ import { Users, UserPlus, UserMinus } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Community } from "@/lib/api";
-import { designTokens, cn, motionSafe, componentPatterns } from "@/lib/design-system";
+import { cn } from "@/lib/utils";
 
 interface CommunityCardProps {
   community: Community;
@@ -61,8 +61,8 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
   return (
     <Card
       className={cn(
-        componentPatterns.card,
-        designTokens.focus.visible
+        "cursor-pointer hover:shadow-md transition-shadow",
+        "focus:outline-none focus:ring-2 focus:ring-primary"
       )}
       onClick={handleCardClick}
       role="article"
@@ -83,8 +83,8 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
             <div
               className={cn(
                 "w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center",
-                designTokens.transition.default,
-                motionSafe("hover:bg-primary/20 hover:scale-110")
+                "transition-all duration-200",
+                "hover:bg-primary/20 hover:scale-110"
               )}
               aria-hidden="true"
             >
@@ -94,14 +94,14 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
                   alt=""
                   className={cn(
                     "w-8 h-8 rounded",
-                    designTokens.transition.default
+                    "transition-all duration-200"
                   )}
                   loading="lazy"
                 />
               ) : (
                 <span className={cn(
                   "text-lg font-bold",
-                  designTokens.text.brand
+                  "text-primary"
                 )}>
                   {community.name.charAt(0).toUpperCase()}
                 </span>
@@ -110,13 +110,13 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
             <div>
               <h3 className={cn(
                 "font-semibold text-lg",
-                designTokens.text.primary
+                "text-foreground"
               )}>
                 {community.name}
               </h3>
               <div className={cn(
                 "flex items-center space-x-1 text-sm",
-                designTokens.text.muted
+                "text-muted-foreground"
               )}>
                 <Users className="h-4 w-4" aria-hidden="true" />
                 <span aria-label={`${community.memberCount} members`}>
@@ -130,7 +130,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
         {/* Community description */}
         <div className="mb-4">
           <p className={cn(
-            designTokens.text.muted,
+            "text-muted-foreground",
             "text-sm line-clamp-3"
           )} role="main">
             {community.description}
@@ -142,10 +142,10 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
         <div className="flex items-center justify-between w-full">
           <div className={cn(
             "text-xs",
-            designTokens.text.muted
+            "text-muted-foreground"
           )}>
             <time dateTime={community.createdAt}>
-              Created {new Date(community.createdAt).toLocaleDateString()}
+              Created {community.createdAt ? new Date(community.createdAt).toLocaleDateString() : 'Unknown'}
             </time>
           </div>
 
@@ -156,8 +156,8 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
             disabled={isLoading}
             className={cn(
               "flex items-center space-x-1 button-press",
-              designTokens.accessibility.touchTarget,
-              motionSafe("hover:scale-105 active:scale-95")
+              "min-h-[44px] min-w-[44px]",
+              "hover:scale-105 active:scale-95 transition-transform"
             )}
             aria-label={`${isJoined ? 'Leave' : 'Join'} ${community.name} community`}
             aria-pressed={isJoined}
@@ -166,19 +166,19 @@ const CommunityCard: React.FC<CommunityCardProps> = ({
               <div
                 className={cn(
                   "h-4 w-4 rounded-full border-2 border-current border-t-transparent",
-                  motionSafe(designTokens.animation.spin)
+                  "animate-spin"
                 )}
                 aria-hidden="true"
               />
             ) : isJoined ? (
               <UserMinus className={cn(
                 "h-4 w-4",
-                motionSafe("hover:rotate-12")
+                "hover:rotate-12 transition-transform"
               )} aria-hidden="true" />
             ) : (
               <UserPlus className={cn(
                 "h-4 w-4",
-                motionSafe("hover:rotate-12")
+                "hover:rotate-12 transition-transform"
               )} aria-hidden="true" />
             )}
             <span>{isJoined ? "Leave" : "Join"}</span>
