@@ -158,170 +158,6 @@ No (Can be added if required)
 ------------------------------------------------------------------------
 
 
-# Community API Documentation
-
-## Overview
-This API manages communities in the Blind CU application, including fetching all communities, joining a community, and leaving a community.
-
----
-
-# 1. Get All Communities  
-**Endpoint:** `GET /community/getcommunities`  
-**Authentication Required:** Yes  
-
-### **Description**  
-Fetches the list of all available communities.
-
----
-
-## **Request**
-### Method  
-`GET`
-
-### Headers
-| Key | Value | Required | Description |
-|------|---------|----------|-------------|
-| Authorization | Bearer `<token>` | Yes | User authentication token |
-| Content-Type | application/json | Yes | Request format |
-
-### Path Params  
-_None_
-
-### Query Params  
-_None_
-
----
-
-## **Success Response**
-**Status Code:** `200 OK`
-
-```json
-{
-  "communities": [
-    {
-      "community_id": "CSE101",
-      "name": "CSE Community",
-      "description": "Computer Science Students",
-      "icon": "📚",
-      "memberCount": 120,
-      "createdAt": "2025-01-10T14:00:00.000Z"
-    }
-  ]
-}
-```
-
----
-
-## **Error Responses**
-| Status | Meaning | When |
-|--------|---------|------|
-| 500 | Internal Server Error | Database error |
-
----
-
-# 2. Join Community  
-**Endpoint:** `POST /community/joincommunity`  
-**Authentication Required:** Yes  
-
----
-
-## **Description**  
-Allows a user to join a specific community.
-
----
-
-## **Request**
-### Method  
-`POST`
-
-### Headers
-| Key | Value | Required | Description |
-|------|---------|----------|-------------|
-| Authorization | Bearer `<token>` | Yes | Authentication token |
-| Content-Type | application/json | Yes | Body format |
-
-### **Body Parameters**
-```json
-{
-  "user_id": "user123",
-  "community_id": "CSE101"
-}
-```
-
-| Field | Type | Required | Description |
-|--------|--------|----------|-------------|
-| user_id | string | Yes | ID of user joining |
-| community_id | string | Yes | ID of the community |
-
----
-
-## **Success Response**
-**Status Code:** `200 OK`
-
-```json
-{
-  "message": "Joined Community Successfully"
-}
-```
-
----
-
-## **Error Responses**
-| Status | Message | When |
-|--------|-----------|------|
-| 400 | User not found | Invalid user_id |
-| 500 | Server Error | DB operation failed |
-
----
-
-# 3. Leave Community  
-**Endpoint:** `POST /community/leavecommunity`  
-**Authentication Required:** Yes  
-
----
-
-## **Description**  
-Allows a user to leave a previously joined community.
-
----
-
-## **Request**
-### Method  
-`POST`
-
-### Body Parameters
-```json
-{
-  "user_id": "user123",
-  "community_id": "CSE101"
-}
-```
-
-| Field | Type | Required | Description |
-|--------|--------|-----------|-------------|
-| user_id | string | Yes | User identifier |
-| community_id | string | Yes | Community ID |
-
----
-
-## **Success Response**
-**Status Code:** `200 OK`
-
-```json
-{
-  "message": "Left Community Successfully"
-}
-```
-
----
-
-## **Error Responses**
-| Status | Meaning | When |
-|--------|---------|------|
-| 400 | User not found | Invalid user_id |
-| 500 | Server Error | DB update failure |
-
----
 
 
 # Global Posts API Documentation
@@ -527,67 +363,60 @@ or
 }
 ```
 
----
+# 4. Delete Global Post
+----------------------
 
-# Notes  
-- Cloudinary image uploads handled via `multer` (`upload.array("images", 4)`).
-- `images` field stores Cloudinary URLs.
-- Global Feed is separate from Community Posts.
-- All posts are anonymized using `randomName`.
+### DELETE
 
----
+`/:id`
 
-# Related Endpoints  
-- `POST /community/:id/post` — Create a community post  
-- `GET /posts` — Global feed for all communities  
+### Example
 
----
+`DELETE /api/global/post456`
 
-# Community posting messages 
+### Response (200)
 
+`{
+  "message": "Post deleted successfully"
+}`
 
-### community posting system uses Socket.IO for real-time messaging within communities. Messages are stored in MongoDB and broadcast to all users in that community room.
-- `How It Works:`
-1. Join a Community (Socket Event)
-javascriptsocket.emit("join_community", community_id);
+* * * * *
 
-User joins a Socket.IO room named after the community_id
-All messages sent to this community will be received by users in this room
+❌ Common Error Responses
+========================
 
-2. Send a Message (Socket Event)
-   
-```javascriptsocket.emit("send_message", {
-    community_id: "placements",
-    user_id: "user123",
-    randomName: "CoolPanda",
-    message: "Hey everyone!",
-    images: ["base64_image_data"] // optional
-});
-```
-Backend Process:
+### 400 -- Bad Request
 
-Uploads images to Cloudinary (if provided)
-Saves message to MongoDB
-Broadcasts message to all users in the community room via received_message event
+`{
+  "message": "comment cannot be empty"
+}`
 
-```
-3. Receive Messages (Socket Event - Client Side)
-javascriptsocket.on("received_message", (newMessage) => {
-    console.log(newMessage);
-    // Display message in UI
-});
+### 404 -- Not Found
 
-```
-```
+`{
+  "message": "Post not found"
+}`
 
-#### **4. Fetch Message History (REST API)**
-```
-GET /communitypost/:community_id/messages
-Authorization: Bearer <token>
+### 500 -- Server Error
 
+`{
+  "message": "Server Error"
+}`
 
+* * * * *
 
+🧠 Notes for Frontend Developers
+================================
 
+-   `likedBy` array contains user IDs
+
+-   To check if current user liked a post:
+
+`likedBy.includes(currentUserId)`
+
+-   Use `commentsCount` instead of `comments.length` for UI performance
+
+-   User identity is anonymous and shown via `randomName`
 
 
 # Global Post Comment API Documentation
@@ -738,4 +567,344 @@ curl -X POST https://api.example.com/globalpost/123/comment \
 ```
 
 
-# Community post like docs.
+# Community API Documentation
+
+## Overview
+This API manages communities in the Blind CU application, including fetching all communities, joining a community, and leaving a community.
+
+---
+
+# 1. Get All Communities  
+**Endpoint:** `GET /community/getcommunities`  
+**Authentication Required:** Yes  
+
+### **Description**  
+Fetches the list of all available communities.
+
+---
+
+## **Request**
+### Method  
+`GET`
+
+### Headers
+| Key | Value | Required | Description |
+|------|---------|----------|-------------|
+| Authorization | Bearer `<token>` | Yes | User authentication token |
+| Content-Type | application/json | Yes | Request format |
+
+### Path Params  
+_None_
+
+### Query Params  
+_None_
+
+---
+
+## **Success Response**
+**Status Code:** `200 OK`
+
+```json
+{
+  "communities": [
+    {
+      "community_id": "CSE101",
+      "name": "CSE Community",
+      "description": "Computer Science Students",
+      "icon": "📚",
+      "memberCount": 120,
+      "createdAt": "2025-01-10T14:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## **Error Responses**
+| Status | Meaning | When |
+|--------|---------|------|
+| 500 | Internal Server Error | Database error |
+
+---
+
+# 2. Join Community  
+**Endpoint:** `POST /community/joincommunity`  
+**Authentication Required:** Yes  
+
+---
+
+## **Description**  
+Allows a user to join a specific community.
+
+---
+
+## **Request**
+### Method  
+`POST`
+
+### Headers
+| Key | Value | Required | Description |
+|------|---------|----------|-------------|
+| Authorization | Bearer `<token>` | Yes | Authentication token |
+| Content-Type | application/json | Yes | Body format |
+
+### **Body Parameters**
+```json
+{
+  "user_id": "user123",
+  "community_id": "CSE101"
+}
+```
+
+| Field | Type | Required | Description |
+|--------|--------|----------|-------------|
+| user_id | string | Yes | ID of user joining |
+| community_id | string | Yes | ID of the community |
+
+---
+
+## **Success Response**
+**Status Code:** `200 OK`
+
+```json
+{
+  "message": "Joined Community Successfully"
+}
+```
+
+---
+
+## **Error Responses**
+| Status | Message | When |
+|--------|-----------|------|
+| 400 | User not found | Invalid user_id |
+| 500 | Server Error | DB operation failed |
+
+---
+
+# 3. Leave Community  
+**Endpoint:** `POST /community/leavecommunity`  
+**Authentication Required:** Yes  
+
+---
+
+## **Description**  
+Allows a user to leave a previously joined community.
+
+---
+
+## **Request**
+### Method  
+`POST`
+
+### Body Parameters
+```json
+{
+  "user_id": "user123",
+  "community_id": "CSE101"
+}
+```
+
+| Field | Type | Required | Description |
+|--------|--------|-----------|-------------|
+| user_id | string | Yes | User identifier |
+| community_id | string | Yes | Community ID |
+
+---
+
+## **Success Response**
+**Status Code:** `200 OK`
+
+```json
+{
+  "message": "Left Community Successfully"
+}
+```
+
+---
+
+## **Error Responses**
+| Status | Meaning | When |
+|--------|---------|------|
+| 400 | User not found | Invalid user_id |
+| 500 | Server Error | DB update failure |
+
+---
+
+
+# Community posting API docs
+
+## Community posting messages 
+
+
+### community posting system uses Socket.IO for real-time messaging within communities. Messages are stored in MongoDB and broadcast to all users in that community room.
+- `How It Works:`
+1. Join a Community (Socket Event)
+javascriptsocket.emit("join_community", community_id);
+
+User joins a Socket.IO room named after the community_id
+All messages sent to this community will be received by users in this room
+
+2. Send a Message (Socket Event)
+   
+```javascriptsocket.emit("send_message", {
+    community_id: "placements",
+    user_id: "user123",
+    randomName: "CoolPanda",
+    message: "Hey everyone!",
+    images: ["base64_image_data"] // optional
+});
+```
+Backend Process:
+
+Uploads images to Cloudinary (if provided)
+Saves message to MongoDB
+Broadcasts message to all users in the community room via received_message event
+
+```
+3. Receive Messages (Socket Event - Client Side)
+javascriptsocket.on("received_message", (newMessage) => {
+    console.log(newMessage);
+    // Display message in UI
+});
+
+```
+```
+
+#### **4. Fetch Message History (REST API)**
+```
+GET /communitypost/:community_id/messages
+Authorization: Bearer <token>
+
+
+---
+
+# Notes  
+- Cloudinary image uploads handled via `multer` (`upload.array("images", 4)`).
+- `images` field stores Cloudinary URLs.
+- Global Feed is separate from Community Posts.
+- All posts are anonymized using `randomName`.
+
+---
+
+# Related Endpoints  
+- `POST /community/:id/post` — Create a community post  
+- `GET /posts` — Global feed for all communities  
+
+---
+
+
+
+###  Like / Unlike Community Message
+-------------------------------
+
+Toggle like on a community message.
+
+### Endpoint
+
+`POST /:id/like`
+
+### Example
+
+`POST /api/community/msg123/like`
+
+### Request Body
+
+`{
+  "user_id": "user1"
+}`
+
+### Success Response
+
+`{
+  "message": "Liked",
+  "likes": 3
+}`
+
+or
+
+`{
+  "message": "Unliked",
+  "likes": 2
+}`
+
+* * * * *
+
+Comment on Community Message
+----------------------------
+
+Add a comment to a message.
+
+### Endpoint
+
+`POST /:id/comment`
+
+### Example
+
+`POST /api/community/msg123/comment`
+
+### Request Body
+
+`{
+  "user_id": "user1",
+  "randomName": "Anonymous Wolf",
+  "comment": "Nice post!"
+}`
+
+### Success Response (200)
+
+`{
+  "message": "Comment added successfully",
+  "comments": [
+    {
+      "user_id": "user1",
+      "randomName": "Anonymous Wolf",
+      "content": "Nice post!"
+    }
+  ]
+}`
+
+* * * * *
+
+Delete Community Message
+------------------------
+
+Delete a community message by ID.
+
+### Endpoint
+
+`DELETE /:id`
+
+### Example
+
+`DELETE /api/community/msg123`
+
+### Success Response (200)
+
+`{
+  "message": "Message deleted successfully"
+}`
+
+* * * * *
+
+Error Responses
+---------------
+
+### 400 -- Bad Request
+
+`{
+  "message": "comment cannot be empty"
+}`
+
+### 404 -- Not Found
+
+`{
+  "message": "Message not found"
+}`
+
+### 500 -- Server Error
+
+`{
+  "message": "Server Error"
+}`
