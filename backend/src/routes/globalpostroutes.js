@@ -9,6 +9,6 @@ router.get('/getglobalposts', authmiddleware, getglobalfeed);
 router.post('/createglobalposts', authmiddleware, upload.array("images", 4), createGlobalPost);
 router.post('/:id/like', authmiddleware, likeGlobalPost);
 router.post('/:id/comment', authmiddleware, commentGlobalPost);
-router.post('/:id/deletecomment', authmiddleware, deleteGlobalPost);
+router.delete('/:id', authmiddleware, deleteGlobalPost);
 
 export default router;
