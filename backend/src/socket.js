@@ -52,7 +52,8 @@ export const initsocket = (server)=>{
         });
 
         io.to(community_id).emit("received_message", newMessage);
-
+//why we have used oi.to here instead of socket.emit
+// By using io.to(community_id).emit(...), the message is broadcasted to all sockets that have joined the specified community room. This ensures that every user in that community receives the new message in real-time.
             }
             catch(e){
                 console.log("error in socket message ", e);
