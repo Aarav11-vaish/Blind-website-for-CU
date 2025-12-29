@@ -3,23 +3,22 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import RouteErrorBoundary from "@/components/error/RouteErrorBoundary";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ProfileForm } from "@/components/profile";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
-import { User, Mail, Calendar, Save, ArrowLeft } from "lucide-react";
+import { profileService, ProfileUpdateResult } from "@/lib/profileService";
+import { ProfileFormData } from "@/lib/profileValidation";
+import { ArrowLeft, CheckCircle, AlertCircle, Wifi, WifiOff, Clock } from "lucide-react";
 
 const ProfilePage = () => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, redirectToSignin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    userName: "",
-    email: "",
-    graduationYear: "",
-  });
+  const [hasPendingUpdates, setHasPendingUpdates] = useState(false);
+  const [lastUpdateResult, setLastUpdateResult] = useState<ProfileUpdateResult | null>(null);
 
   useEffect(() => {
     // Don't redirect while auth is still loading
@@ -32,67 +31,76 @@ const ProfilePage = () => {
       return;
     }
 
+    // Check for pending updates
     if (user) {
-      setFormData({
-        userName: user.user_name || "",
-        email: user.email || "",
-        graduationYear: user.graduation_year?.toString() || "",
-      });
+      setHasPendingUpdates(profileService.hasUserPendingUpdates(user.user_id));
     }
   }, [user, isAuthenticated, authLoading, redirectToSignin]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  // Listen for sync completion events
+  useEffect(() => {
+    const handleSyncComplete = (event: CustomEvent) => {
+      const { syncedUsers } = event.detail;
+      if (user && syncedUsers.includes(user.user_id)) {
+        setHasPendingUpdates(false);
+        toast({
+          title: "Profile Synced",
+          description: "Your profile changes have been synced successfully.",
+          variant: "success",
+        });
+      }
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    window.addEventListener("profileSyncComplete", handleSyncComplete as EventListener);
+    return () => {
+      window.removeEventListener("profileSyncComplete", handleSyncComplete as EventListener);
+    };
+  }, [user]);
 
-    // Check if there are any changes
-    const hasChanges = user && (
-      formData.userName !== (user.user_name || "") ||
-      formData.graduationYear !== (user.graduation_year?.toString() || "")
-    );
-
-    if (!hasChanges) {
+  const handleProfileSubmit = async (formData: ProfileFormData) => {
+    if (!user) {
       toast({
-        title: "No Changes Made",
-        description: "Your profile information is already up to date.",
-        variant: "info",
+        title: "Error",
+        description: "User not found. Please sign in again.",
+        variant: "error",
       });
       return;
     }
 
     setIsLoading(true);
+    setLastUpdateResult(null);
 
     try {
-      // Here you would typically make an API call to update the profile
-      // For now, we'll just simulate the update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await profileService.updateProfile(user.user_id, formData);
+      setLastUpdateResult(result);
 
-      // Update localStorage with new data
-      if (user) {
-        const updatedUser = {
-          ...user,
-          user_name: formData.userName,
-          graduation_year: parseInt(formData.graduationYear) || undefined,
-        };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+      if (result.success) {
+        if (result.wasOffline) {
+          setHasPendingUpdates(true);
+          toast({
+            title: "Saved Locally",
+            description: result.message,
+            variant: "info",
+          });
+        } else {
+          toast({
+            title: "Profile Updated",
+            description: result.message,
+            variant: "success",
+          });
+        }
+      } else {
+        toast({
+          title: "Update Failed",
+          description: result.message,
+          variant: "error",
+        });
       }
-
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-        variant: "success",
-      });
     } catch (error) {
+      console.error("Profile update error:", error);
       toast({
         title: "Update Failed",
-        description: "Failed to update profile. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "error",
       });
     } finally {
@@ -102,6 +110,24 @@ const ProfilePage = () => {
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleRetrySync = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      await profileService.syncPendingUpdates();
+    } catch (error) {
+      console.error("Sync retry failed:", error);
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync changes. Will retry automatically when online.",
+        variant: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Show loading while auth is being checked
@@ -122,128 +148,88 @@ const ProfilePage = () => {
   }
 
   // Don't render anything if not authenticated (will redirect)
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return null;
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBack}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
-          </Button>
-          <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
-        </div>
+    <RouteErrorBoundary routeName="Profile">
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBack}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </Button>
+            <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
+          </div>
 
-        <Card className="max-w-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <User className="h-5 w-5" />
-              <span>Personal Information</span>
-            </CardTitle>
-            <CardDescription>
-              Update your profile information and preferences.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="userName" className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
-                  <span>Display Name</span>
-                </Label>
-                <Input
-                  id="userName"
-                  name="userName"
-                  type="text"
-                  value={formData.userName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your display name"
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">
-                  This is how your name will appear to other users.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4" />
-                  <span>Email Address</span>
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  disabled
-                  className="w-full bg-muted"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Email address cannot be changed for security reasons.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="graduationYear" className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>Graduation Year</span>
-                </Label>
-                <Input
-                  id="graduationYear"
-                  name="graduationYear"
-                  type="number"
-                  value={formData.graduationYear}
-                  onChange={handleInputChange}
-                  placeholder="e.g., 2025"
-                  min="2020"
-                  max="2030"
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Your expected graduation year.
-                </p>
-              </div>
-
-              <div className="flex justify-end space-x-4 pt-4">
+          {/* Pending Updates Alert */}
+          {hasPendingUpdates && (
+            <Alert className="max-w-2xl border-blue-200 bg-blue-50">
+              <Clock className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800 flex items-center justify-between">
+                <span>You have unsaved changes that will sync when you're back online.</span>
                 <Button
-                  type="button"
                   variant="outline"
-                  onClick={handleBack}
+                  size="sm"
+                  onClick={handleRetrySync}
                   disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex items-center space-x-2"
+                  className="ml-4 border-blue-300 text-blue-700 hover:bg-blue-100"
                 >
                   {isLoading ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      <span>Saving...</span>
-                    </>
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      <span>Save Changes</span>
-                    </>
+                    "Retry Sync"
                   )}
                 </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </DashboardLayout>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Success/Error Feedback */}
+          {lastUpdateResult && (
+            <Alert className={`max-w-2xl ${lastUpdateResult.success
+              ? lastUpdateResult.wasOffline
+                ? "border-blue-200 bg-blue-50"
+                : "border-green-200 bg-green-50"
+              : "border-red-200 bg-red-50"
+              }`}>
+              {lastUpdateResult.success ? (
+                lastUpdateResult.wasOffline ? (
+                  <WifiOff className="h-4 w-4 text-blue-600" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                )
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              )}
+              <AlertDescription className={
+                lastUpdateResult.success
+                  ? lastUpdateResult.wasOffline
+                    ? "text-blue-800"
+                    : "text-green-800"
+                  : "text-red-800"
+              }>
+                {lastUpdateResult.message}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Profile Form */}
+          <ProfileForm
+            user={user}
+            onSubmit={handleProfileSubmit}
+            isLoading={isLoading}
+          />
+        </div>
+      </DashboardLayout>
+    </RouteErrorBoundary>
   );
 };
 

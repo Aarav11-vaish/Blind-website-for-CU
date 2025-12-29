@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowUp, MessageCircle, Share2, Clock, Image as ImageIcon, ThumbsUp } from "lucide-react";
+import { MessageCircle, Share2, Clock, ThumbsUp } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GlobalPost, likeGlobalPost } from "@/lib/api";
-import { designTokens, cn, motionSafe, componentPatterns } from "@/lib/design-system";
 import { toast } from "@/components/ui/use-toast";
 
 interface PostCardProps {
@@ -26,79 +25,72 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isLiking, setIsLiking] = useState(false);
   const [localLikes, setLocalLikes] = useState(post.likes);
   const [localLikedBy, setLocalLikedBy] = useState(post.likedBy);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-  // Update local state when post prop changes (for parent-managed state)
-  React.useEffect(() => {
-    setLocalLikes(post.likes);
-    setLocalLikedBy(post.likedBy);
-  }, [post.likes, post.likedBy]);
+  // Filter and validate images
+  const validImages = React.useMemo(() => {
+    if (!post.images || !Array.isArray(post.images)) return [];
 
-  // Get current user ID from localStorage (if available)
-  const getCurrentUserId = () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
+    return post.images.filter(img => {
+      // Check if image URL is valid
+      if (!img || typeof img !== 'string' || !img.trim()) return false;
 
-      // Decode JWT token to get user ID (basic implementation)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.user_id || payload.id;
-    } catch {
-      return null;
-    }
+      // Check if this image has failed to load
+      if (failedImages.has(img)) return false;
+
+      // Basic URL validation
+      try {
+        new URL(img);
+        return true;
+      } catch {
+        // If not a valid URL, check if it's a relative path
+        return img.startsWith('/') || img.startsWith('./') || img.startsWith('../');
+      }
+    });
+  }, [post.images, failedImages]);
+
+  const handleImageError = (imageUrl: string) => {
+    setFailedImages(prev => new Set([...prev, imageUrl]));
   };
 
-  const currentUserId = getCurrentUserId();
-  // Use post data directly when onLike is provided (parent manages state)
-  const displayLikes = onLike ? post.likes : localLikes;
-  const displayLikedBy = onLike ? post.likedBy : localLikedBy;
-  const isLikedByUser = currentUserId ? displayLikedBy.includes(currentUserId) : false;
+  // Check if current user has liked this post
+  const userData = typeof window !== 'undefined' ? localStorage.getItem("user") : null;
+  const currentUser = userData ? JSON.parse(userData) : null;
+  const isLikedByUser = currentUser && localLikedBy.includes(currentUser.user_id);
 
   const handleLike = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click when liking
+    e.stopPropagation();
 
     if (isLiking) return;
 
     setIsLiking(true);
-    const wasLiked = isLikedByUser;
 
     try {
       if (onLike) {
-        // Use the parent's like handler - it will update the parent's state
         await onLike(post._id);
-
-        // Show success toast
-        toast({
-          title: wasLiked ? "Post Unliked" : "Post Liked",
-          description: wasLiked ? "You removed your like from this post" : "You liked this post",
-          variant: wasLiked ? "info" : "success",
-        });
       } else {
-        // Default like functionality using API
-        const response = await likeGlobalPost(post._id);
-        setLocalLikes(response.likes);
-
-        // Update likedBy array locally since backend doesn't return it
-        if (currentUserId) {
-          if (isLikedByUser) {
-            setLocalLikedBy(prev => prev.filter(id => id !== currentUserId));
-          } else {
-            setLocalLikedBy(prev => [...prev, currentUserId]);
-          }
-        }
-
-        // Show success toast
-        toast({
-          title: wasLiked ? "Post Unliked" : "Post Liked",
-          description: wasLiked ? "You removed your like from this post" : "You liked this post",
-          variant: wasLiked ? "info" : "success",
-        });
+        // Default like behavior
+        await likeGlobalPost(post._id);
       }
+
+      // Update local state optimistically
+      if (isLikedByUser) {
+        setLocalLikes(prev => Math.max(0, prev - 1));
+        setLocalLikedBy(prev => prev.filter(id => id !== currentUser.user_id));
+      } else {
+        setLocalLikes(prev => prev + 1);
+        setLocalLikedBy(prev => [...prev, currentUser.user_id]);
+      }
+
+      toast({
+        title: isLikedByUser ? "Post unliked" : "Post liked",
+        description: isLikedByUser ? "You removed your like" : "You liked this post",
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to like post:", error);
-
-      // Show error toast
       toast({
-        title: "Action Failed",
+        title: "Error",
         description: "Failed to update like. Please try again.",
         variant: "error",
       });
@@ -114,44 +106,25 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleShare = async (e: React.MouseEvent) => {
+  const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    try {
-      if (onShare) {
-        onShare(post._id);
+    if (onShare) {
+      onShare(post._id);
+    } else {
+      // Default share behavior
+      if (navigator.share) {
+        navigator.share({
+          title: `Post by ${post.randomName}`,
+          text: post.content.substring(0, 100) + "...",
+          url: window.location.origin + `/dashboard/post/${post._id}`,
+        });
       } else {
-        // Default share functionality
-        if (navigator.share) {
-          await navigator.share({
-            title: `Post by ${post.randomName}`,
-            text: post.content,
-            url: window.location.href,
-          });
-
-          toast({
-            title: "Post Shared",
-            description: "Post shared successfully",
-            variant: "success",
-          });
-        } else {
-          // Fallback: copy to clipboard
-          await navigator.clipboard.writeText(window.location.href);
-
-          toast({
-            title: "Link Copied",
-            description: "Post link copied to clipboard",
-            variant: "success",
-          });
-        }
-      }
-    } catch (error) {
-      // User cancelled share or clipboard failed
-      if (error instanceof Error && error.name !== 'AbortError') {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.origin + `/dashboard/post/${post._id}`);
         toast({
-          title: "Share Failed",
-          description: "Failed to share post. Please try again.",
-          variant: "error",
+          title: "Link copied",
+          description: "Post link copied to clipboard",
+          variant: "success",
         });
       }
     }
@@ -172,16 +145,12 @@ const PostCard: React.FC<PostCardProps> = ({
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-
     return date.toLocaleDateString();
   };
 
   return (
     <Card
-      className={cn(
-        componentPatterns.card,
-        designTokens.focus.visible
-      )}
+      className="cursor-pointer hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary"
       onClick={handleCardClick}
       role="article"
       aria-label={`Post by ${post.randomName}`}
@@ -194,37 +163,25 @@ const PostCard: React.FC<PostCardProps> = ({
       }}
     >
       <CardContent className="p-6">
-        {/* Author and timestamp */}
+        {/* Post header */}
         <header className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
+            {/* User avatar */}
             <div
-              className={cn(
-                "w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center",
-                designTokens.transition.default,
-                motionSafe("hover:bg-primary/20 hover:scale-110")
-              )}
+              className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-primary/20 hover:scale-110"
               aria-hidden="true"
             >
-              <span className={cn(
-                "text-sm font-medium",
-                designTokens.text.brand
-              )}>
+              <span className="text-sm font-medium text-primary">
                 {post.randomName.charAt(0).toUpperCase()}
               </span>
             </div>
-            <span className={cn(
-              "font-medium",
-              designTokens.text.primary
-            )}>
+            <span className="font-medium text-foreground">
               {post.randomName}
             </span>
           </div>
-          <div className={cn(
-            "flex items-center space-x-1 text-sm",
-            designTokens.text.muted
-          )}>
+          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" aria-hidden="true" />
-            <time dateTime={post.createdAt} aria-label={`Posted ${formatTimeAgo(post.createdAt)}`}>
+            <time dateTime={post.createdAt}>
               {formatTimeAgo(post.createdAt)}
             </time>
           </div>
@@ -232,151 +189,79 @@ const PostCard: React.FC<PostCardProps> = ({
 
         {/* Post content */}
         <div className="mb-4">
-          <p className={cn(
-            designTokens.text.primary,
-            "whitespace-pre-wrap break-words"
-          )} role="main">
+          <p className="text-foreground whitespace-pre-wrap break-words" role="main">
             {post.content}
           </p>
         </div>
 
-        {/* Images */}
-        {post.images && post.images.length > 0 && (
-          <div className="mb-4" role="img" aria-label={`${post.images.length} image${post.images.length > 1 ? 's' : ''} attached to post`}>
-            {post.images.length === 1 ? (
-              <div className={cn(
-                "relative rounded-lg overflow-hidden",
-                designTokens.background.muted,
-                designTokens.transition.default,
-                motionSafe("hover:scale-[1.02]")
-              )}>
+        {/* Post images */}
+        {validImages.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {validImages.map((image, index) => (
+              <div key={index} className="relative rounded-lg overflow-hidden bg-muted transition-all duration-200 hover:scale-[1.02]">
                 <img
-                  src={post.images[0]}
-                  alt="Post attachment"
-                  className={cn(
-                    "w-full max-h-96 object-cover",
-                    designTokens.transition.default
-                  )}
+                  src={image}
+                  alt={`Image ${index + 1} from post by ${post.randomName}`}
+                  className="w-full max-h-64 sm:max-h-80 md:max-h-96 object-cover transition-all duration-200"
                   loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.nextElementSibling?.classList.remove('hidden');
-                  }}
+                  onError={() => handleImageError(image)}
                 />
-                <div className={cn(
-                  "hidden flex items-center justify-center h-32",
-                  designTokens.text.muted
-                )} role="img" aria-label="Image unavailable">
-                  <ImageIcon className="h-8 w-8" aria-hidden="true" />
-                  <span className="ml-2">Image unavailable</span>
-                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2" role="group" aria-label="Post images">
-                {post.images.slice(0, 4).map((image, index) => (
-                  <div key={index} className="relative rounded-lg overflow-hidden bg-muted aspect-square">
-                    <img
-                      src={image}
-                      alt={`Post attachment ${index + 1} of ${post.images.length}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                    <div className="hidden flex items-center justify-center h-full text-muted-foreground" role="img" aria-label="Image unavailable">
-                      <ImageIcon className="h-6 w-6" aria-hidden="true" />
-                    </div>
-                    {index === 3 && post.images.length > 4 && (
-                      <div
-                        className="absolute inset-0 bg-black/50 flex items-center justify-center"
-                        aria-label={`${post.images.length - 4} more images`}
-                      >
-                        <span className="text-white font-medium">
-                          +{post.images.length - 4}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         )}
       </CardContent>
 
       <CardFooter className="px-6 py-4 pt-0">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center space-x-2" role="group" aria-label="Post actions">
-            <Button
-              variant={isLikedByUser ? "default" : "outline"}
-              size="sm"
-              onClick={handleLike}
-              disabled={isLiking}
-              className={cn(
-                "flex items-center space-x-2 button-press transition-all duration-200",
-                designTokens.accessibility.touchTarget,
-                isLikedByUser
-                  ? "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white border-red-500 dark:border-red-600"
-                  : "hover:bg-red-50 dark:hover:bg-red-950 hover:border-red-200 dark:hover:border-red-800 hover:text-red-600 dark:hover:text-red-400",
-                motionSafe("hover:scale-105 active:scale-95"),
-                isLiking && "animate-pulse"
-              )}
-              aria-label={`${isLikedByUser ? 'Unlike' : 'Like'} post. Currently ${displayLikes} likes`}
-              aria-pressed={isLikedByUser}
-            >
-              <ThumbsUp
-                className={cn(
-                  "h-4 w-4",
-                  isLikedByUser ? "fill-white stroke-white text-white" : "",
-                  designTokens.transition.transform,
-                  motionSafe("hover:scale-110"),
-                  isLiking && motionSafe("animate-pulse")
-                )}
-                aria-hidden="true"
-              />
-              <span className="font-medium">{displayLikes}</span>
-            </Button>
+        <div className="flex items-center space-x-4">
+          {/* Like button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLike}
+            disabled={isLiking}
+            className={`flex items-center space-x-1 sm:space-x-2 transition-all duration-200 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 min-h-[44px] min-w-[44px] ${
+              isLikedByUser
+                ? "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white border-red-500 dark:border-red-600"
+                : "hover:bg-red-50 dark:hover:bg-red-950 hover:border-red-200 dark:hover:border-red-800 hover:text-red-600 dark:hover:text-red-400"
+            } ${isLiking ? "animate-pulse" : ""}`}
+            aria-label={`${isLikedByUser ? 'Unlike' : 'Like'} post by ${post.randomName}`}
+            aria-pressed={isLikedByUser}
+          >
+            <ThumbsUp
+              className={`h-3 w-3 sm:h-4 sm:w-4 ${
+                isLikedByUser ? "fill-white stroke-white text-white" : ""
+              } ${isLiking ? "animate-pulse" : ""}`}
+              aria-hidden="true"
+            />
+            <span>{localLikes}</span>
+          </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleComment}
-              className={cn(
-                "flex items-center space-x-1 button-press",
-                designTokens.accessibility.touchTarget,
-                motionSafe("hover:scale-105 active:scale-95")
-              )}
-              aria-label={`View comments. ${post.commentsCount || 0} comments`}
-            >
-              <MessageCircle className={cn(
-                "h-4 w-4",
-                motionSafe("hover:rotate-12")
-              )} aria-hidden="true" />
-              <span>{post.commentsCount || 0}</span>
-            </Button>
+          {/* Comment button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleComment}
+            className={`flex items-center space-x-1 relative text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 min-h-[44px] min-w-[44px] ${
+              !onComment ? "opacity-75" : ""
+            }`}
+            aria-label={`Comment on post by ${post.randomName}`}
+          >
+            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+            <span>{post.commentsCount || 0}</span>
+          </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShare}
-              className={cn(
-                "flex items-center space-x-1 button-press",
-                designTokens.accessibility.touchTarget,
-                motionSafe("hover:scale-105 active:scale-95")
-              )}
-              aria-label="Share post"
-            >
-              <Share2 className={cn(
-                "h-4 w-4",
-                motionSafe("hover:rotate-12")
-              )} aria-hidden="true" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
-          </div>
+          {/* Share button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleShare}
+            className="flex items-center space-x-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 min-h-[44px] min-w-[44px]"
+            aria-label="Share post"
+          >
+            <Share2 className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+            <span className="hidden xs:inline">Share</span>
+          </Button>
         </div>
       </CardFooter>
     </Card>

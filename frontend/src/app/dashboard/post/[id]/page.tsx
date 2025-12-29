@@ -36,7 +36,7 @@ const PostDetailPage = () => {
       // For now, we'll fetch all posts and find the specific one
       // In a real implementation, there would be a getPostById endpoint
       const response = await getGlobalPosts();
-      const foundPost = response.posts.find(p => p._id === postId);
+      const foundPost = response.posts.find((p: GlobalPost) => p._id === postId);
 
       if (!foundPost) {
         setError("Post not found");

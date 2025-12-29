@@ -14,8 +14,9 @@ import {
   TrendingUp,
   Plus,
   UsersIcon,
+  Search,
 } from "lucide-react";
-import { designTokens, cn, motionSafe, componentPatterns } from "@/lib/design-system";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -33,6 +34,7 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
   { id: "all", label: "All Posts", icon: Grid, href: "/dashboard" },
+  { id: "search", label: "Search", icon: Search, href: "/dashboard/search" },
   { id: "create-post", label: "Create Post", icon: Plus, href: "/dashboard/create-post" },
   { id: "communities", label: "Communities", icon: UsersIcon, href: "/dashboard/communities" },
   { id: "academics", label: "Academics", icon: BookOpen, href: "/dashboard/academics" },
@@ -47,119 +49,89 @@ const navigationItems: NavigationItem[] = [
 const Sidebar = ({ isCollapsed = false, isMobile = false, onClose }: SidebarProps) => {
   const pathname = usePathname();
 
-  // Handle link click
-  const handleLinkClick = () => {
-    if (isMobile && onClose) {
-      onClose();
-    }
-  };
-
-  // Handle keyboard navigation
-  const handleKeyDown = (event: React.KeyboardEvent, href: string) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      window.location.href = href;
-      if (isMobile && onClose) {
-        onClose();
-      }
-    }
-  };
+  const trendingTags = ["#academics", "#placements", "#campus", "#exams", "#internships"];
 
   return (
     <aside
       className={cn(
         "w-full",
         isCollapsed ? 'hidden' : 'block',
-        isMobile && designTokens.background.card,
-        isMobile && 'h-full'
+        isMobile && "bg-card h-full"
       )}
-      role="complementary"
-      aria-label="Navigation sidebar"
+      role="navigation"
+      aria-label="Main navigation"
     >
-      <div
+      <nav
         className={cn(
-          "rounded-lg p-4",
-          designTokens.background.card,
-          "border",
-          designTokens.border.default,
-          designTokens.shadow.sm,
-          designTokens.transition.all,
+          "rounded-lg p-4 bg-card border border-border shadow-sm transition-all duration-200",
           isMobile && 'border-0 rounded-none h-full'
         )}
       >
-        <nav
-          className="flex flex-col space-y-2"
-          role="navigation"
-          aria-label="Main navigation"
-        >
+        <ul className="space-y-2" role="list">
           {navigationItems.map((item) => {
-            const Icon = item.icon;
             const isActive = pathname === item.href;
+            const Icon = item.icon;
 
             return (
-              <Link
-                key={item.id}
-                href={item.href}
-                onClick={handleLinkClick}
-                onKeyDown={(e) => handleKeyDown(e, item.href)}
-                className={cn(
-                  componentPatterns.navItem,
-                  "transition-colors duration-200",
-                  isActive && "bg-primary/20 text-primary font-semibold",
-                  !isActive && designTokens.text.muted,
-                  !isActive && "hover:bg-accent/50 hover:text-accent-foreground",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-                )}
-                aria-current={isActive ? 'page' : undefined}
-                tabIndex={0}
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
+              <li key={item.id} role="listitem">
+                <Link
+                  href={item.href}
+                  onClick={onClose}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 py-2 rounded-md",
+                    "transition-colors duration-200",
+                    isActive && "bg-primary/20 text-primary font-semibold",
+                    !isActive && "text-muted-foreground",
+                    !isActive && "hover:bg-accent/50 hover:text-accent-foreground",
+                    "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              </li>
             );
           })}
-        </nav>
+        </ul>
 
         <div className={cn(
-          "my-6 border-t",
-          designTokens.border.default
+          "my-6 border-t border-border"
         )} role="separator" />
 
-        <section className="space-y-3" aria-labelledby="trending-heading">
-          <div
+        <section aria-labelledby="trending-heading">
+          <h3
+            id="trending-heading"
             className={cn(
-              "flex items-center space-x-2",
-              designTokens.text.primary
+              "flex items-center space-x-2 text-foreground"
             )}
           >
             <TrendingUp className={cn(
-              designTokens.text.brand,
-              "h-5 w-5",
-              motionSafe("animate-pulse")
+              "text-primary h-5 w-5 animate-pulse"
             )} aria-hidden="true" />
-            <h3 id="trending-heading" className="font-bold">Trending</h3>
-          </div>
-
-          <nav className="flex flex-col space-y-2 text-sm" role="navigation" aria-label="Trending topics">
-            {['#Midterms', '#Internship', '#HostelFood'].map((tag, index) => (
-              <button
-                key={tag}
-                className={cn(
-                  "text-left cursor-pointer rounded px-2 py-1 flex items-center",
-                  designTokens.text.muted,
-                  "hover:text-primary focus:text-primary",
-                  "transition-colors duration-200",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2",
-                  designTokens.accessibility.touchTarget
-                )}
-                aria-label={`View posts about ${tag.slice(1)}`}
-              >
-                {tag}
-              </button>
+            <span className="font-bold">Trending</span>
+          </h3>
+          <ul className="mt-3 space-y-1" role="list">
+            {trendingTags.map((tag, index) => (
+              <li key={index} role="listitem">
+                <button
+                  type="button"
+                  className={cn(
+                    "text-left cursor-pointer rounded px-2 py-1 flex items-center",
+                    "text-muted-foreground hover:text-primary focus:text-primary",
+                    "transition-colors duration-200",
+                    "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2",
+                    "min-h-[44px] min-w-[44px]"
+                  )}
+                  aria-label={`View posts about ${tag.slice(1)}`}
+                >
+                  {tag}
+                </button>
+              </li>
             ))}
-          </nav>
+          </ul>
         </section>
-      </div>
+      </nav>
     </aside>
   );
 };
